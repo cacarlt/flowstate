@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    ports:
+      - "31060:3001"
+    volumes:
+      - ${APP_DATA_PATH:-./data}:/app/data
+    environment:
+      - PROFILE_NAME=${PROFILE_NAME:-Work}
+      - PROFILE_COLOR=${PROFILE_COLOR:-#6366f1}
+      - INTEGRATIONS=${INTEGRATIONS:-ado}
+      - ADO_ORG=${ADO_ORG:-IdentityDivision}
+      - ADO_PROJECT=${ADO_PROJECT:-Engineering}
+      - ADO_PAT=${ADO_PAT:-}
+      - ADO_PAT_AUTH_ID=${ADO_PAT_AUTH_ID:-}
+      - ADO_PAT_NAME=${ADO_PAT_NAME:-}
+      - ADO_PAT_ORG=${ADO_PAT_ORG:-IdentityDivision}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_USERNAME=${GITHUB_USERNAME:-}
+    restart: unless-stopped

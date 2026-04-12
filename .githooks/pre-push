@@ -1,0 +1,25 @@
+#!/bin/bash
+# Pre-push hook: all tests must pass before pushing
+# Install: git config core.hooksPath .githooks
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo "Running tests before push..."
+
+echo "==> Server unit + integration tests"
+cd server && npm test
+cd ..
+
+echo "==> Client component tests"
+cd client && npm test
+cd ..
+
+echo "==> E2E tests"
+cd e2e && npx playwright test
+cd ..
+
+echo -e "${GREEN}✓ All tests passed. Pushing.${NC}"

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+data/
+*.db
+
+# Secrets — never commit these
+.env
+.env.*
+!.env.*.example
+
+# Test artifacts
+test-results/
+playwright-report/

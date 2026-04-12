@@ -1,0 +1,54 @@
+#!/bin/bash
+# Pre-commit hook: block secrets from being committed
+# Install: git config core.hooksPath .githooks
+
+set -e
+
+RED='\033[0;31m'
+NC='\033[0m'
+
+# Patterns that should never appear in committed files
+PATTERNS=(
+  'ADO_PAT=[a-zA-Z0-9]{40,}'       # Real PAT (40+ chars, no placeholder words)
+  'GITHUB_TOKEN=ghp_[a-zA-Z0-9]+'  # Real GitHub PAT
+  'GITHUB_TOKEN=github_pat_'        # Real GitHub fine-grained PAT
+)
+
+# Files to always block
+BLOCKED_FILES=(
+  '.env'
+)
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+# Block .env files
+for file in $STAGED; do
+  for blocked in "${BLOCKED_FILES[@]}"; do
+    if [[ "$file" == "$blocked" || "$file" == *"/.env" ]]; then
+      echo -e "${RED}BLOCKED:${NC} Refusing to commit '$file' — secrets file."
+      echo "         Add it to .gitignore and unstage with: git reset HEAD $file"
+      exit 1
+    fi
+  done
+done
+
+# Scan staged content for secret patterns
+for file in $STAGED; do
+  # Skip binary files, examples, and the hook itself
+  [[ "$file" == *.example ]] && continue
+  [[ "$file" == *.png ]] && continue
+  [[ "$file" == *.jpg ]] && continue
+  [[ "$file" == *.db ]] && continue
+  [[ "$file" == .githooks/* ]] && continue
+
+  for pattern in "${PATTERNS[@]}"; do
+    if git show ":$file" 2>/dev/null | grep -qE "$pattern"; then
+      echo -e "${RED}BLOCKED:${NC} Found potential secret in '$file'"
+      echo "         Pattern: $pattern"
+      echo "         Review and remove the secret, then re-stage."
+      exit 1
+    fi
+  done
+done
+
+echo "✓ No secrets detected in staged files."
