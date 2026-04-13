@@ -13,7 +13,7 @@ projectsRouter.get('/', (_req, res) => {
     FROM projects p
     LEFT JOIN todos t ON t.project_id = p.id
     GROUP BY p.id
-    ORDER BY p.sort_order, p.created_at DESC
+    ORDER BY p.priority ASC, p.sort_order, p.created_at DESC
   `);
   res.json(projects);
 });
@@ -39,7 +39,7 @@ projectsRouter.post('/', (req, res) => {
 
 // Update project
 projectsRouter.put('/:id', (req, res) => {
-  const { name, due_date, collapsed, sort_order } = req.body;
+  const { name, due_date, collapsed, sort_order, priority } = req.body;
   const fields: string[] = [];
   const values: any[] = [];
 
@@ -47,6 +47,7 @@ projectsRouter.put('/:id', (req, res) => {
   if (due_date !== undefined) { fields.push('due_date = ?'); values.push(due_date); }
   if (collapsed !== undefined) { fields.push('collapsed = ?'); values.push(collapsed ? 1 : 0); }
   if (sort_order !== undefined) { fields.push('sort_order = ?'); values.push(sort_order); }
+  if (priority !== undefined) { fields.push('priority = ?'); values.push(Math.max(0, Math.min(9, Number(priority)))); }
 
   if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
@@ -62,4 +63,27 @@ projectsRouter.put('/:id', (req, res) => {
 projectsRouter.delete('/:id', (req, res) => {
   run('DELETE FROM projects WHERE id = ?', [req.params.id]);
   res.status(204).end();
+});
+
+// Link/unlink ADO item (Feature) to project
+projectsRouter.post('/:id/ado-link', (req, res) => {
+  const { ado_item_id } = req.body;
+  run('INSERT OR IGNORE INTO project_ado_links (project_id, ado_item_id) VALUES (?, ?)', [req.params.id, ado_item_id]);
+  res.status(201).json({ linked: true });
+});
+
+projectsRouter.delete('/:id/ado-link/:adoItemId', (req, res) => {
+  run('DELETE FROM project_ado_links WHERE project_id = ? AND ado_item_id = ?', [req.params.id, req.params.adoItemId]);
+  res.status(204).end();
+});
+
+// Get ADO items linked to a project
+projectsRouter.get('/:id/ado-items', (req, res) => {
+  const items = all(`
+    SELECT a.* FROM ado_items a
+    INNER JOIN project_ado_links l ON l.ado_item_id = a.id
+    WHERE l.project_id = ?
+    ORDER BY a.type, a.title
+  `, [req.params.id]);
+  res.json(items);
 });

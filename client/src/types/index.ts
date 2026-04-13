@@ -4,6 +4,7 @@ export interface Project {
   due_date: string | null;
   collapsed: number;
   sort_order: number;
+  priority: number;
   created_at: string;
   updated_at: string;
   total_estimate_hours: number;
@@ -15,6 +16,7 @@ export interface Todo {
   id: number;
   project_id: number;
   title: string;
+  notes: string | null;
   estimate_hours: number | null;
   due_date: string | null;
   status: 'todo' | 'in_progress' | 'done';
@@ -22,6 +24,7 @@ export interface Todo {
   created_at: string;
   updated_at: string;
   session_count: number;
+  ado_link_count: number;
 }
 
 export interface AdoItem {
@@ -34,6 +37,8 @@ export interface AdoItem {
   state: string | null;
   assigned_to: string | null;
   last_synced_at: string;
+  linked_todos: { todo_id: number; todo_title: string; project_name: string }[];
+  linked_projects: { project_id: number; project_name: string }[];
 }
 
 export interface CopilotSession {
@@ -73,7 +78,7 @@ export interface AppConfig {
 }
 
 export interface PatStatus {
-  status: 'active' | 'expiring_soon' | 'expired' | 'not_configured' | 'unknown';
+  status: 'active' | 'expiring_soon' | 'expired' | 'not_configured' | 'configured' | 'unknown';
   name: string | null;
   scopes: string | null;
   organization: string | null;

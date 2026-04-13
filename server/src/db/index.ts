@@ -90,6 +90,7 @@ function initSchema(db: SqlJsDb) {
       due_date TEXT,
       collapsed INTEGER NOT NULL DEFAULT 0,
       sort_order INTEGER NOT NULL DEFAULT 0,
+      priority INTEGER NOT NULL DEFAULT 5,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -99,6 +100,7 @@ function initSchema(db: SqlJsDb) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       title TEXT NOT NULL,
+      notes TEXT,
       estimate_hours REAL,
       due_date TEXT,
       status TEXT NOT NULL DEFAULT 'todo',
@@ -125,6 +127,13 @@ function initSchema(db: SqlJsDb) {
       todo_id INTEGER NOT NULL REFERENCES todos(id) ON DELETE CASCADE,
       ado_item_id INTEGER NOT NULL REFERENCES ado_items(id) ON DELETE CASCADE,
       PRIMARY KEY (todo_id, ado_item_id)
+    )
+  `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS project_ado_links (
+      project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      ado_item_id INTEGER NOT NULL REFERENCES ado_items(id) ON DELETE CASCADE,
+      PRIMARY KEY (project_id, ado_item_id)
     )
   `);
   db.run(`
@@ -199,5 +208,35 @@ function runMigrations(db: SqlJsDb) {
     if (!cols.has(col)) {
       try { db.run(sql); } catch (_) {}
     }
+  }
+
+  // Projects migrations
+  const projCols = new Set<string>();
+  try {
+    const stmt2 = db.prepare("PRAGMA table_info(projects)");
+    while (stmt2.step()) {
+      const row = stmt2.getAsObject();
+      projCols.add(row.name as string);
+    }
+    stmt2.free();
+  } catch (_) { return; }
+
+  if (!projCols.has('priority')) {
+    try { db.run('ALTER TABLE projects ADD COLUMN priority INTEGER NOT NULL DEFAULT 5'); } catch (_) {}
+  }
+
+  // Todos migrations
+  const todoCols = new Set<string>();
+  try {
+    const stmt3 = db.prepare("PRAGMA table_info(todos)");
+    while (stmt3.step()) {
+      const row = stmt3.getAsObject();
+      todoCols.add(row.name as string);
+    }
+    stmt3.free();
+  } catch (_) { return; }
+
+  if (!todoCols.has('notes')) {
+    try { db.run('ALTER TABLE todos ADD COLUMN notes TEXT'); } catch (_) {}
   }
 }

@@ -7,7 +7,8 @@ export const todosRouter = Router();
 todosRouter.get('/', (req, res) => {
   const { project_id, status } = req.query;
   let sql = `SELECT t.*,
-    (SELECT COUNT(*) FROM copilot_sessions cs WHERE cs.todo_id = t.id) as session_count
+    (SELECT COUNT(*) FROM copilot_sessions cs WHERE cs.todo_id = t.id) as session_count,
+    (SELECT COUNT(*) FROM todo_ado_links tal WHERE tal.todo_id = t.id) as ado_link_count
     FROM todos t WHERE 1=1`;
   const params: any[] = [];
 
@@ -33,11 +34,12 @@ todosRouter.post('/', (req, res) => {
 
 // Update todo
 todosRouter.put('/:id', (req, res) => {
-  const { title, estimate_hours, due_date, status, sort_order, project_id } = req.body;
+  const { title, estimate_hours, due_date, status, sort_order, project_id, notes } = req.body;
   const fields: string[] = [];
   const values: any[] = [];
 
   if (title !== undefined) { fields.push('title = ?'); values.push(title); }
+  if (notes !== undefined) { fields.push('notes = ?'); values.push(notes); }
   if (estimate_hours !== undefined) { fields.push('estimate_hours = ?'); values.push(estimate_hours); }
   if (due_date !== undefined) { fields.push('due_date = ?'); values.push(due_date); }
   if (status !== undefined) { fields.push('status = ?'); values.push(status); }
@@ -69,6 +71,17 @@ todosRouter.post('/:id/ado-link', (req, res) => {
 todosRouter.delete('/:id/ado-link/:adoItemId', (req, res) => {
   run('DELETE FROM todo_ado_links WHERE todo_id = ? AND ado_item_id = ?', [req.params.id, req.params.adoItemId]);
   res.status(204).end();
+});
+
+// Get ADO items linked to a todo
+todosRouter.get('/:id/ado-items', (req, res) => {
+  const items = all(`
+    SELECT a.* FROM ado_items a
+    INNER JOIN todo_ado_links l ON l.ado_item_id = a.id
+    WHERE l.todo_id = ?
+    ORDER BY a.type, a.title
+  `, [req.params.id]);
+  res.json(items);
 });
 
 // Get sessions linked to a todo (via direct todo_id FK on copilot_sessions)

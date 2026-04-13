@@ -6,6 +6,7 @@ services:
     volumes:
       - ${APP_DATA_PATH:-./data}:/app/data
     environment:
+      - TZ=America/Los_Angeles
       - PROFILE_NAME=${PROFILE_NAME:-Work}
       - PROFILE_COLOR=${PROFILE_COLOR:-#6366f1}
       - INTEGRATIONS=${INTEGRATIONS:-ado}

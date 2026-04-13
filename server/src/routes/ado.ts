@@ -22,10 +22,39 @@ function adoBaseUrl() {
   return `https://dev.azure.com/${ADO_ORG}/${ADO_PROJECT}/_apis`;
 }
 
-// Get locally stored ADO items
+// Get locally stored ADO items with linked project/todo info
 adoRouter.get('/items', (_req, res) => {
   const items = all('SELECT * FROM ado_items ORDER BY sprint_name DESC, type, title');
-  res.json(items);
+  const todoLinks = all(`
+    SELECT l.ado_item_id, t.id as todo_id, t.title as todo_title, p.name as project_name
+    FROM todo_ado_links l
+    JOIN todos t ON t.id = l.todo_id
+    LEFT JOIN projects p ON p.id = t.project_id
+  `);
+  const projectLinks = all(`
+    SELECT l.ado_item_id, p.id as project_id, p.name as project_name
+    FROM project_ado_links l
+    JOIN projects p ON p.id = l.project_id
+  `);
+
+  const todoLinkMap: Record<number, { todo_id: number; todo_title: string; project_name: string }[]> = {};
+  for (const l of todoLinks as any[]) {
+    if (!todoLinkMap[l.ado_item_id]) todoLinkMap[l.ado_item_id] = [];
+    todoLinkMap[l.ado_item_id].push({ todo_id: l.todo_id, todo_title: l.todo_title, project_name: l.project_name });
+  }
+  const projectLinkMap: Record<number, { project_id: number; project_name: string }[]> = {};
+  for (const l of projectLinks as any[]) {
+    if (!projectLinkMap[l.ado_item_id]) projectLinkMap[l.ado_item_id] = [];
+    projectLinkMap[l.ado_item_id].push({ project_id: l.project_id, project_name: l.project_name });
+  }
+
+  const enriched = (items as any[]).map((item) => ({
+    ...item,
+    linked_todos: todoLinkMap[item.id] || [],
+    linked_projects: projectLinkMap[item.id] || [],
+  }));
+
+  res.json(enriched);
 });
 
 // Get PAT lifecycle status
@@ -77,9 +106,9 @@ adoRouter.get('/pat-status', async (_req, res) => {
     }
   }
 
-  // Fallback: return what we know from env vars
+  // Fallback: PAT is set but we can't query lifecycle — show as configured
   res.json({
-    status: 'unknown',
+    status: ADO_PAT_AUTH_ID ? 'unknown' : 'configured',
     name: ADO_PAT_NAME || null,
     scopes: null,
     organization: ADO_PAT_ORG || ADO_ORG,
@@ -89,30 +118,43 @@ adoRouter.get('/pat-status', async (_req, res) => {
   });
 });
 
-// Sync ADO items (pull PBIs and Features assigned to me)
+// Sync ADO items (pull PBIs and Features — assigned to me + unassigned)
 adoRouter.post('/sync', async (_req, res) => {
   if (!ADO_PAT || !ADO_ORG || !ADO_PROJECT) {
     return res.status(400).json({ error: 'ADO_PAT, ADO_ORG, and ADO_PROJECT env vars required' });
   }
 
   try {
-    const wiql = {
+    // Query 1: Items assigned to me
+    const myWiql = {
       query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = @Me AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed' ORDER BY [System.ChangedDate] DESC`
     };
 
-    const wiqlRes = await fetch(`${adoBaseUrl()}/wit/wiql?api-version=7.1`, {
-      method: 'POST',
-      headers: adoHeaders(),
-      body: JSON.stringify(wiql),
-    });
+    // Query 2: Unassigned items in the same project
+    const unassignedWiql = {
+      query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = '' AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed' ORDER BY [System.ChangedDate] DESC`
+    };
 
-    if (!wiqlRes.ok) {
-      const text = await wiqlRes.text();
-      return res.status(wiqlRes.status).json({ error: `ADO WIQL failed: ${text}` });
+    const [myRes, unRes] = await Promise.all([
+      fetch(`${adoBaseUrl()}/wit/wiql?api-version=7.1`, {
+        method: 'POST', headers: adoHeaders(), body: JSON.stringify(myWiql),
+      }),
+      fetch(`${adoBaseUrl()}/wit/wiql?api-version=7.1`, {
+        method: 'POST', headers: adoHeaders(), body: JSON.stringify(unassignedWiql),
+      }),
+    ]);
+
+    if (!myRes.ok) {
+      const text = await myRes.text();
+      return res.status(myRes.status).json({ error: `ADO WIQL failed: ${text}` });
     }
 
-    const wiqlData = await wiqlRes.json() as { workItems: { id: number }[] };
-    const ids = wiqlData.workItems.map((wi: any) => wi.id);
+    const myData = await myRes.json() as { workItems: { id: number }[] };
+    const unData = unRes.ok ? await unRes.json() as { workItems: { id: number }[] } : { workItems: [] };
+
+    const idSet = new Set<number>();
+    for (const wi of [...myData.workItems, ...unData.workItems]) { idSet.add(wi.id); }
+    const ids = [...idSet];
 
     if (ids.length === 0) {
       return res.json({ synced: 0, items: [] });

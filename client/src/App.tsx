@@ -48,7 +48,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100 tracking-tight">FlowState</h1>
             {config && (
@@ -69,8 +69,8 @@ export default function App() {
           </button>
         </div>
         {/* Tab bar */}
-        <div className="max-w-5xl mx-auto px-4">
-          <nav className="flex gap-1">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex gap-1 overflow-x-auto">
             {visibleTabs.map((tab) => (
               <button
                 key={tab.key}
@@ -90,7 +90,7 @@ export default function App() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {activeTab === 'myday' && <MyDayView />}
         {activeTab === 'tasks' && <TasksView />}
         {activeTab === 'ado' && <AdoView />}

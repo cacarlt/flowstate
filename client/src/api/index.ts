@@ -22,6 +22,12 @@ export const api = {
     request<any>(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProject: (id: number) =>
     request<void>(`/projects/${id}`, { method: 'DELETE' }),
+  linkProjectAdoItem: (projectId: number, adoItemId: number) =>
+    request<any>(`/projects/${projectId}/ado-link`, { method: 'POST', body: JSON.stringify({ ado_item_id: adoItemId }) }),
+  unlinkProjectAdoItem: (projectId: number, adoItemId: number) =>
+    request<void>(`/projects/${projectId}/ado-link/${adoItemId}`, { method: 'DELETE' }),
+  getProjectAdoItems: (projectId: number) =>
+    request<any[]>(`/projects/${projectId}/ado-items`),
 
   // Todos
   getTodos: (projectId?: number) =>
@@ -36,6 +42,10 @@ export const api = {
     request<any[]>(`/todos/${todoId}/sessions`),
   linkAdoItem: (todoId: number, adoItemId: number) =>
     request<any>(`/todos/${todoId}/ado-link`, { method: 'POST', body: JSON.stringify({ ado_item_id: adoItemId }) }),
+  unlinkAdoItem: (todoId: number, adoItemId: number) =>
+    request<void>(`/todos/${todoId}/ado-link/${adoItemId}`, { method: 'DELETE' }),
+  getTodoAdoItems: (todoId: number) =>
+    request<any[]>(`/todos/${todoId}/ado-items`),
   linkSession: (todoId: number, sessionId: number) =>
     request<any>(`/todos/${todoId}/session-link`, { method: 'POST', body: JSON.stringify({ session_id: sessionId }) }),
 

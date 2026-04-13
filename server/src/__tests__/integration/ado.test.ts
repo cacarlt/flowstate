@@ -22,6 +22,13 @@ describe('ADO API (local storage)', () => {
     const res = await request(app).get('/api/ado/current-sprint');
     expect(res.status).toBe(400);
   });
+
+  it('GET /api/ado/pat-status returns not_configured when no PAT', async () => {
+    const res = await request(app).get('/api/ado/pat-status');
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('not_configured');
+    expect(res.body.organization).toBeTruthy();
+  });
 });
 
 describe('Todo-ADO linking', () => {
@@ -46,6 +53,53 @@ describe('Todo-ADO linking', () => {
     // Unlink
     const unlink = await request(app).delete(`/api/todos/${todo.body.id}/ado-link/${adoItem.id}`);
     expect(unlink.status).toBe(204);
+  });
+
+  it('GET /api/todos/:id/ado-items returns linked ADO items', async () => {
+    const proj = await request(app).post('/api/projects').send({ name: 'ADO Items Test' });
+    const todo = await request(app).post('/api/todos').send({ project_id: proj.body.id, title: 'Task with ADO' });
+
+    const { run } = await import('../../db');
+    run(
+      'INSERT INTO ado_items (ado_work_item_id, type, url, title, sprint_name, state) VALUES (?, ?, ?, ?, ?, ?)',
+      [99999, 'Feature', 'https://dev.azure.com/test/99999', 'Feature Title', 'Sprint 2', 'Active']
+    );
+    const adoItems = await request(app).get('/api/ado/items');
+    const adoItem = adoItems.body.find((i: any) => i.ado_work_item_id === 99999);
+
+    // Before linking, should be empty
+    const before = await request(app).get(`/api/todos/${todo.body.id}/ado-items`);
+    expect(before.status).toBe(200);
+    expect(before.body).toEqual([]);
+
+    // Link
+    await request(app).post(`/api/todos/${todo.body.id}/ado-link`).send({ ado_item_id: adoItem.id });
+
+    // After linking, should contain the item
+    const after = await request(app).get(`/api/todos/${todo.body.id}/ado-items`);
+    expect(after.status).toBe(200);
+    expect(after.body).toHaveLength(1);
+    expect(after.body[0].ado_work_item_id).toBe(99999);
+    expect(after.body[0].title).toBe('Feature Title');
+  });
+
+  it('todos include ado_link_count', async () => {
+    const proj = await request(app).post('/api/projects').send({ name: 'Count Test' });
+    const todo = await request(app).post('/api/todos').send({ project_id: proj.body.id, title: 'Counted Task' });
+
+    const { run } = await import('../../db');
+    run(
+      'INSERT INTO ado_items (ado_work_item_id, type, url, title, sprint_name, state) VALUES (?, ?, ?, ?, ?, ?)',
+      [77777, 'Product Backlog Item', 'https://dev.azure.com/test/77777', 'PBI', 'Sprint 1', 'New']
+    );
+    const adoItems = await request(app).get('/api/ado/items');
+    const adoItem = adoItems.body.find((i: any) => i.ado_work_item_id === 77777);
+
+    await request(app).post(`/api/todos/${todo.body.id}/ado-link`).send({ ado_item_id: adoItem.id });
+
+    const todos = await request(app).get('/api/todos');
+    const updated = todos.body.find((t: any) => t.id === todo.body.id);
+    expect(updated.ado_link_count).toBe(1);
   });
 });
 

@@ -67,7 +67,7 @@ describe('TasksView', () => {
     await waitFor(() => {
       expect(screen.getByText('My Project')).toBeInTheDocument();
       expect(screen.getByText('1/3 tasks')).toBeInTheDocument();
-      expect(screen.getByText('⏱ 8h')).toBeInTheDocument();
+      expect(screen.getByText('8h')).toBeInTheDocument();
     });
   });
 
@@ -108,11 +108,11 @@ describe('TasksView', () => {
     render(<TasksView />);
     const user = userEvent.setup();
 
-    expect(screen.getByText('all')).toBeInTheDocument();
-    expect(screen.getByText('active')).toBeInTheDocument();
-    expect(screen.getByText('done')).toBeInTheDocument();
+    expect(screen.getByText('All')).toBeInTheDocument();
+    expect(screen.getByText('To Do')).toBeInTheDocument();
+    expect(screen.getByText('Complete')).toBeInTheDocument();
 
-    await user.click(screen.getByText('active'));
+    await user.click(screen.getByText('To Do'));
     // Should not crash
   });
 
