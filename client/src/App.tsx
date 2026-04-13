@@ -70,12 +70,12 @@ export default function App() {
         </div>
         {/* Tab bar */}
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-1 overflow-x-auto">
+          <nav className="flex gap-1 overflow-x-auto scrollbar-hide whitespace-nowrap pb-px">
             {visibleTabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors flex items-center gap-1.5 ${
+                className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-t-lg transition-colors flex items-center gap-1.5 shrink-0 ${
                   activeTab === tab.key
                     ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border-b-2 border-blue-600'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'

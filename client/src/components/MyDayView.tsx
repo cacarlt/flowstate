@@ -163,7 +163,7 @@ function TaskRow({ task, onCycle, statusIcon, isOverdue }: {
   isOverdue?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+      <div className="flex items-center gap-2 sm:gap-3 py-2.5 px-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
       <button onClick={() => onCycle(task)} className="shrink-0">{statusIcon(task.status)}</button>
       <div className="flex-1 min-w-0">
         <span className={`text-sm block truncate ${task.status === 'done' ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'}`}>
@@ -171,7 +171,7 @@ function TaskRow({ task, onCycle, statusIcon, isOverdue }: {
         </span>
         <span className="text-xs text-gray-400 dark:text-gray-500">{task.project_name}</span>
       </div>
-      <div className="flex items-center gap-2 text-xs shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 text-xs shrink-0">
         {task.estimate_hours && <span className="flex items-center gap-1 text-gray-400"><Clock size={10} /> {task.estimate_hours}h</span>}
         {task.due_date && (
           <span className={`flex items-center gap-1 ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>

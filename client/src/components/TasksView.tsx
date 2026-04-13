@@ -280,7 +280,7 @@ export default function TasksView() {
   return (
     <div>
       {/* Controls bar */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
         <button
           onClick={() => setShowNewProject(!showNewProject)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1.5"
@@ -307,13 +307,13 @@ export default function TasksView() {
         </div>
         <button
           onClick={() => setExpanded(new Set(projects.map((p) => p.id)))}
-          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
+          className="hidden sm:flex text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 items-center gap-1"
         >
           <ChevronsDown size={14} /> Expand all
         </button>
         <button
           onClick={() => setExpanded(new Set())}
-          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
+          className="hidden sm:flex text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 items-center gap-1"
         >
           <ChevronsUp size={14} /> Collapse all
         </button>
@@ -423,12 +423,12 @@ export default function TasksView() {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-4 text-xs text-gray-500 dark:text-gray-400 shrink-0">
                   {project.total_estimate_hours > 0 && (
-                    <span title="Total estimated hours" className="flex items-center gap-1"><Clock size={12} /> {project.total_estimate_hours}h</span>
+                    <span title="Total estimated hours" className="hidden sm:flex items-center gap-1"><Clock size={12} /> {project.total_estimate_hours}h</span>
                   )}
                   {project.due_date && (
-                    <span title="Due date" className="flex items-center gap-1"><Calendar size={12} /> {project.due_date}</span>
+                    <span title="Due date" className="flex items-center gap-1"><Calendar size={12} /> <span className="hidden sm:inline">{project.due_date}</span><span className="sm:hidden">{project.due_date.slice(5)}</span></span>
                   )}
                   <button
                     onClick={(e) => startEditProject(project, e)}
@@ -530,7 +530,7 @@ export default function TasksView() {
                               </button>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                          <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-400 dark:text-gray-500 shrink-0 flex-wrap">
                             {todo.estimate_hours && <span className="flex items-center gap-1"><Clock size={12} /> {todo.estimate_hours}h</span>}
                             {todo.due_date && <span className="flex items-center gap-1"><Calendar size={12} /> {todo.due_date}</span>}
                             {todo.ado_link_count > 0 && (
