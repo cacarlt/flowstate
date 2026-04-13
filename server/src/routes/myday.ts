@@ -7,25 +7,33 @@ mydayRouter.get('/', (_req, res) => {
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-  // Tasks due today or overdue (not done)
+  // Tasks whose project delivery date is today or past (due/overdue), excluding done
   const dueTasks = all(`
-    SELECT t.*, p.name as project_name FROM todos t
-    LEFT JOIN projects p ON p.id = t.project_id
-    WHERE t.due_date <= ? AND t.status != 'done'
-    ORDER BY t.due_date, t.sort_order
+    SELECT t.*, p.name as project_name, p.due_date as project_due_date FROM todos t
+    JOIN projects p ON p.id = t.project_id
+    WHERE p.due_date IS NOT NULL AND p.due_date <= ? AND t.status != 'done'
+    ORDER BY p.due_date, t.sort_order
   `, [today]);
 
-  // In-progress tasks (regardless of due date)
+  // Tasks scheduled to work on today (task's own due_date = today, not done, not already in-progress)
+  const scheduledToday = all(`
+    SELECT t.*, p.name as project_name, p.due_date as project_due_date FROM todos t
+    LEFT JOIN projects p ON p.id = t.project_id
+    WHERE t.due_date = ? AND t.status = 'todo'
+    ORDER BY t.sort_order
+  `, [today]);
+
+  // In-progress tasks (regardless of dates)
   const inProgress = all(`
-    SELECT t.*, p.name as project_name FROM todos t
+    SELECT t.*, p.name as project_name, p.due_date as project_due_date FROM todos t
     LEFT JOIN projects p ON p.id = t.project_id
     WHERE t.status = 'in_progress'
     ORDER BY t.sort_order
   `);
 
-  // Tasks with no due date that are still todo
+  // Tasks with no scheduled date that are still todo
   const unscheduled = all(`
-    SELECT t.*, p.name as project_name FROM todos t
+    SELECT t.*, p.name as project_name, p.due_date as project_due_date FROM todos t
     LEFT JOIN projects p ON p.id = t.project_id
     WHERE t.due_date IS NULL AND t.status = 'todo'
     ORDER BY t.sort_order
@@ -34,7 +42,7 @@ mydayRouter.get('/', (_req, res) => {
 
   // Tasks completed today
   const completedToday = all(`
-    SELECT t.*, p.name as project_name FROM todos t
+    SELECT t.*, p.name as project_name, p.due_date as project_due_date FROM todos t
     LEFT JOIN projects p ON p.id = t.project_id
     WHERE t.status = 'done' AND t.updated_at >= ?
     ORDER BY t.updated_at DESC
@@ -57,5 +65,5 @@ mydayRouter.get('/', (_req, res) => {
     totalActiveSessions: activeSessions.length,
   };
 
-  res.json({ dueTasks, inProgress, unscheduled, completedToday, activeSessions, stats });
+  res.json({ dueTasks, scheduledToday, inProgress, unscheduled, completedToday, activeSessions, stats });
 });

@@ -14,7 +14,7 @@ beforeEach(() => {
       return { ok: true, status: 200, json: async () => ({ profileName: 'Work', profileColor: '#3b82f6', integrations: ['ado'] }) };
     }
     if (url.includes('/api/myday')) {
-      return { ok: true, status: 200, json: async () => ({ dueTasks: [], inProgress: [], unscheduled: [], completedToday: [], activeSessions: [], stats: { totalDue: 0, totalInProgress: 0, totalCompletedToday: 0, totalActiveSessions: 0 } }) };
+      return { ok: true, status: 200, json: async () => ({ dueTasks: [], scheduledToday: [], inProgress: [], unscheduled: [], completedToday: [], activeSessions: [], stats: { totalDue: 0, totalInProgress: 0, totalCompletedToday: 0, totalActiveSessions: 0 } }) };
     }
     return { ok: true, status: 200, json: async () => [] };
   });

@@ -90,7 +90,7 @@ export default function App() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <main className={`flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 ${activeTab === 'myday' ? 'flex flex-col min-h-0' : ''}`}>
         {activeTab === 'myday' && <MyDayView />}
         {activeTab === 'tasks' && <TasksView />}
         {activeTab === 'ado' && <AdoView />}
