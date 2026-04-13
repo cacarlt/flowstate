@@ -1,6 +1,7 @@
 services:
   app:
     build: .
+    container_name: flowstate
     ports:
       - "31060:3001"
     volumes:
@@ -18,4 +19,16 @@ services:
       - ADO_PAT_ORG=${ADO_PAT_ORG:-IdentityDivision}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - GITHUB_USERNAME=${GITHUB_USERNAME:-}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flowstate.rule=Host(`flowstate.localhost`)"
+      - "traefik.http.routers.flowstate.entrypoints=web"
+      - "traefik.http.services.flowstate.loadbalancer.server.port=3001"
+    networks:
+      - default
+      - traefik-proxy
     restart: unless-stopped
+
+networks:
+  traefik-proxy:
+    external: true
