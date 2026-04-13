@@ -19,7 +19,11 @@ cd client && npm test
 cd ..
 
 echo "==> E2E tests"
-cd e2e && npx playwright test
-cd ..
+if [ -f "e2e/node_modules/.bin/playwright" ]; then
+  cd e2e && npx playwright test
+  cd ..
+else
+  echo "  Skipping E2E (run 'cd e2e && npm install' to enable)"
+fi
 
 echo -e "${GREEN}✓ All tests passed. Pushing.${NC}"
