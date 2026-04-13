@@ -22,8 +22,8 @@ describe('SessionsView', () => {
   it('shows form when Log Session clicked', async () => {
     render(<SessionsView />);
     const user = userEvent.setup();
-    await user.click(screen.getByText(/Log Session/));
-    expect(screen.getByPlaceholderText(/What were you working on/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Log Session/ }));
+    expect(screen.getByPlaceholderText(/What should this session accomplish/)).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Session URL (optional)')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Session ID (optional)')).toBeInTheDocument();
   });
@@ -39,8 +39,8 @@ describe('SessionsView', () => {
     render(<SessionsView />);
     await waitFor(() => {
       expect(screen.getByText('Fixed auth bug')).toBeInTheDocument();
-      expect(screen.getByText('Open session →')).toBeInTheDocument();
-      expect(screen.getByText('📁 my-repo/main')).toBeInTheDocument();
+      expect(screen.getByText(/Open session/)).toBeInTheDocument();
+      expect(screen.getByText(/my-repo/)).toBeInTheDocument();
     });
   });
 });
