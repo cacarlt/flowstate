@@ -124,8 +124,8 @@ export default function AdoView() {
   const patOk = patStatus && patStatus.status !== 'not_configured' && patStatus.status !== 'expired' && patStatus.status !== 'expiring_soon';
 
   return (
-    <div className={linkMode ? 'flex flex-col lg:flex-row gap-4' : ''}>
-      <div className={linkMode ? 'flex-1 min-w-0' : ''}>
+    <div className={`h-[calc(100vh-140px)] flex flex-col ${linkMode ? 'lg:flex-row gap-4' : ''}`}>
+      <div className={`flex flex-col min-h-0 ${linkMode ? 'flex-1 min-w-0' : 'flex-1'}`}>
         {/* Toolbar */}
         <div className="flex items-center gap-2 sm:gap-3 mb-3 flex-wrap">
           <button onClick={sync} disabled={syncing} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1.5">
@@ -174,17 +174,17 @@ export default function AdoView() {
 
         {/* Kanban Board */}
         {filtered.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 min-h-0">
             {KANBAN_COLUMNS.map((col) => {
               const colItems = byState[col.key];
               return (
-                <div key={col.key} className={`border ${col.color} rounded-lg overflow-hidden bg-gray-50/50 dark:bg-gray-900/50`}>
-                  <div className={`${col.headerBg} px-3 py-2 border-b ${col.color} flex items-center gap-2`}>
+                <div key={col.key} className={`flex flex-col border ${col.color} rounded-lg overflow-hidden bg-gray-50/50 dark:bg-gray-900/50 min-h-0`}>
+                  <div className={`${col.headerBg} px-3 py-2 border-b ${col.color} flex items-center gap-2 shrink-0`}>
                     <span className={`w-2 h-2 rounded-full ${col.dot}`} />
                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{col.label}</span>
                     <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{colItems.length}</span>
                   </div>
-                  <div className="p-2 space-y-2 min-h-[100px] max-h-[calc(100vh-280px)] overflow-y-auto">
+                  <div className="flex-1 p-2 space-y-2 overflow-y-auto">
                     {colItems.map((item) => <KanbanCard key={item.id} item={item} typeIcon={typeIcon} draggable={linkMode} onStateChange={handleStateChange} stateChanging={stateChanging === item.id} />)}
                     {colItems.length === 0 && <div className="text-xs text-gray-400 dark:text-gray-600 text-center py-6">—</div>}
                   </div>
