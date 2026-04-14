@@ -19,6 +19,7 @@ export interface Todo {
   notes: string | null;
   estimate_hours: number | null;
   due_date: string | null;
+  scheduled_date: string | null;
   status: 'todo' | 'in_progress' | 'done';
   sort_order: number;
   created_at: string;
@@ -30,7 +31,7 @@ export interface Todo {
 export interface AdoItem {
   id: number;
   ado_work_item_id: number;
-  type: 'Product Backlog Item' | 'Feature';
+  type: string;
   url: string;
   title: string;
   sprint_name: string | null;

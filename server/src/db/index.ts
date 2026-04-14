@@ -239,4 +239,7 @@ function runMigrations(db: SqlJsDb) {
   if (!todoCols.has('notes')) {
     try { db.run('ALTER TABLE todos ADD COLUMN notes TEXT'); } catch (_) {}
   }
+  if (!todoCols.has('scheduled_date')) {
+    try { db.run('ALTER TABLE todos ADD COLUMN scheduled_date TEXT'); } catch (_) {}
+  }
 }

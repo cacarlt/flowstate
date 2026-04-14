@@ -34,8 +34,9 @@ projects ──< todos ──< todo_ado_links >── ado_items
 ```
 
 - **Projects** group tasks. Totals (hours, progress) are derived via SQL aggregation — never stored.
-- **Todos** have title, estimate_hours, due_date, status (todo → in_progress → done).
-- **ADO items** are read-only references pulled from Azure DevOps. Linked to todos via junction table.
+- **Todos** have title, estimate_hours, due_date, scheduled_date, status (todo → in_progress → done).
+- **Scheduled date** is separate from due_date — `scheduled_date` is "when I plan to work on this", `due_date` is the deadline.
+- **ADO items** are synced from Azure DevOps and can be managed (state, edit, create, comment) via the ADO write-back API. Linked to todos via junction table.
 - **Copilot sessions** log terminal session context with notes, URL, repo, branch.
 - **GitHub items** (when `INTEGRATIONS=github`) store issues/PRs from GitHub.
 
@@ -57,9 +58,21 @@ The `GET /api/config` endpoint returns these values. The UI dynamically shows/hi
 
 ### ADO Integration
 
-- **Sync** (`POST /api/ado/sync`): Queries ADO via WIQL for PBIs and Features assigned to the user. Stores results locally in `ado_items` table. Read-only pull — never pushes changes.
+- **Sync** (`POST /api/ado/sync`): Queries ADO via WIQL for PBIs and Features assigned to the user. Stores results locally in `ado_items` table.
 - **PAT Status** (`GET /api/ado/pat-status`): Checks the PAT lifecycle via the ADO PAT Lifecycle API. Returns name, scopes, expiry, days remaining, and a link to the manage tokens page.
-- **Auth**: PAT stored in `.env` as `ADO_PAT`. Server-side only — never sent to the browser.
+- **State Change** (`PATCH /api/ado/items/:id/state`): Updates a work item's state in ADO and syncs locally.
+- **Edit Fields** (`PATCH /api/ado/items/:id`): Updates title, description, assignedTo, areaPath, iterationPath, etc.
+- **Create Item** (`POST /api/ado/items`): Creates a new work item (any type — PBI, Task, Feature, Bug, etc.) in ADO with optional parent linking and auto-linking to a local todo.
+- **Comments** (`POST/GET /api/ado/items/:id/comments`): Add and retrieve comments on work items.
+- **Metadata** (`GET /api/ado/work-item-types`, `GET /api/ado/team-members`, `GET /api/ado/iterations`, `GET /api/ado/area-paths`): Fetch project metadata for forms and dropdowns.
+- **Auth**: PAT stored in `.env` as `ADO_PAT`. Server-side only — never sent to the browser. Requires `vso.work_write` scope for write operations.
+- **ADO Client Module** (`server/src/ado/client.ts`): Reusable client handling auth, JSON Patch formatting, and error mapping for all ADO REST API operations.
+
+### Day Planner
+
+- **MyDay API** (`GET /api/myday?date=YYYY-MM-DD`): Returns tasks for a specific date. Defaults to today. Returns due tasks, scheduled tasks, in-progress, unscheduled, completed, and active Copilot sessions.
+- **Bulk Schedule** (`POST /api/myday/schedule`): Assigns multiple todos to a specific date via `scheduled_date` field.
+- **Scheduled Date**: The `scheduled_date` field on todos is separate from `due_date` — it represents "when I plan to work on this" vs the deadline.
 
 ### GitHub Integration
 
@@ -100,7 +113,7 @@ See [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) for scrape config examples.
 - `.env` files are gitignored and never committed
 - PATs are stored only in `.env` and injected via Docker Compose environment
 - A pre-commit hook scans for secrets and blocks commits containing PATs or tokens
-- ADO PAT scoped to minimum permissions (`vso.work` — Work Items Read)
+- ADO PAT scoped to `vso.work_write` for full work item management (read, create, update, comment)
 - `scripts/check-pat.sh` reports PAT lifecycle status without auto-rotating
 
 ## Testing

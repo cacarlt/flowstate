@@ -54,6 +54,27 @@ export const api = {
   syncAdo: () => request<any>('/ado/sync', { method: 'POST' }),
   getCurrentSprint: () => request<any>('/ado/current-sprint'),
   getAdoPatStatus: () => request<any>('/ado/pat-status'),
+  // ADO write-back
+  updateAdoItemState: (adoWorkItemId: number, state: string) =>
+    request<any>(`/ado/items/${adoWorkItemId}/state`, { method: 'PATCH', body: JSON.stringify({ state }) }),
+  updateAdoItem: (adoWorkItemId: number, fields: Record<string, any>) =>
+    request<any>(`/ado/items/${adoWorkItemId}`, { method: 'PATCH', body: JSON.stringify(fields) }),
+  createAdoItem: (data: { type: string; title: string; description?: string; assignedTo?: string; areaPath?: string; iterationPath?: string; parentId?: number; todoId?: number }) =>
+    request<any>('/ado/items', { method: 'POST', body: JSON.stringify(data) }),
+  addAdoComment: (adoWorkItemId: number, text: string) =>
+    request<any>(`/ado/items/${adoWorkItemId}/comments`, { method: 'POST', body: JSON.stringify({ text }) }),
+  getAdoComments: (adoWorkItemId: number) =>
+    request<any>(`/ado/items/${adoWorkItemId}/comments`),
+  getAdoItemDetails: (adoWorkItemId: number) =>
+    request<any>(`/ado/items/${adoWorkItemId}/details`),
+  getAdoWorkItemTypes: () =>
+    request<any[]>('/ado/work-item-types'),
+  getAdoTeamMembers: (team?: string) =>
+    request<any[]>(`/ado/team-members${team ? `?team=${encodeURIComponent(team)}` : ''}`),
+  getAdoIterations: () =>
+    request<any[]>('/ado/iterations'),
+  getAdoAreaPaths: () =>
+    request<any>('/ado/area-paths'),
 
   // GitHub
   getGithubIssues: () => request<any[]>('/github/issues'),
@@ -63,7 +84,9 @@ export const api = {
   getConfig: () => request<{ profileName: string; profileColor: string; integrations: string[] }>('/config'),
 
   // My Day
-  getMyDay: () => request<any>('/myday'),
+  getMyDay: (date?: string) => request<any>(`/myday${date ? `?date=${date}` : ''}`),
+  scheduleTodos: (date: string, todoIds: number[]) =>
+    request<any>('/myday/schedule', { method: 'POST', body: JSON.stringify({ date, todoIds }) }),
 
   // Copilot sessions
   getSessions: () => request<any[]>('/sessions'),

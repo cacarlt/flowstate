@@ -31,6 +31,7 @@ export default function TasksView() {
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
   const [dragTodoId, setDragTodoId] = useState<number | null>(null);
   const [dragOverTodoId, setDragOverTodoId] = useState<number | null>(null);
+  const [pushingToAdo, setPushingToAdo] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     const p = await api.getProjects();
@@ -219,6 +220,23 @@ export default function TasksView() {
     await api.unlinkAdoItem(todoId, adoItemId);
     const items = await api.getTodoAdoItems(todoId);
     setTodoAdoItems((prev) => ({ ...prev, [todoId]: items }));
+  };
+
+  const pushToAdo = async (todo: Todo) => {
+    setPushingToAdo(todo.id);
+    try {
+      await api.createAdoItem({
+        type: 'Product Backlog Item',
+        title: todo.title,
+        description: todo.notes || undefined,
+        todoId: todo.id,
+      });
+      load();
+    } catch (err: any) {
+      console.error('Push to ADO failed:', err);
+    } finally {
+      setPushingToAdo(null);
+    }
   };
 
   const startEditNotes = (todo: Todo) => {
@@ -540,6 +558,16 @@ export default function TasksView() {
                                 title={`${todo.ado_link_count} linked ADO item(s)`}
                               >
                                 <Layers size={12} /> {todo.ado_link_count}
+                              </button>
+                            )}
+                            {todo.ado_link_count === 0 && (
+                              <button
+                                onClick={() => pushToAdo(todo)}
+                                disabled={pushingToAdo === todo.id}
+                                className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-green-500 hover:text-green-600 transition-all"
+                                title="Push to ADO as PBI"
+                              >
+                                <Layers size={12} /> {pushingToAdo === todo.id ? '...' : '→ ADO'}
                               </button>
                             )}
                             {todo.session_count > 0 && (

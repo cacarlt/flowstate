@@ -12,7 +12,6 @@ describe('ADO API (local storage)', () => {
   });
 
   it('POST /api/ado/sync returns error without PAT', async () => {
-    // ADO_PAT is not set in test environment, so sync should fail gracefully
     const res = await request(app).post('/api/ado/sync');
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/ADO_PAT/);
@@ -28,6 +27,62 @@ describe('ADO API (local storage)', () => {
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('not_configured');
     expect(res.body.organization).toBeTruthy();
+  });
+});
+
+describe('ADO write-back endpoints (validation only)', () => {
+  it('PATCH /api/ado/items/:id/state requires state field', async () => {
+    const res = await request(app).patch('/api/ado/items/12345/state').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/state/i);
+  });
+
+  it('PATCH /api/ado/items/:id requires at least one field', async () => {
+    const res = await request(app).patch('/api/ado/items/12345').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/No fields/i);
+  });
+
+  it('POST /api/ado/items requires type and title', async () => {
+    const res = await request(app).post('/api/ado/items').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/type and title/i);
+  });
+
+  it('POST /api/ado/items requires title', async () => {
+    const res = await request(app).post('/api/ado/items').send({ type: 'Bug' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/type and title/i);
+  });
+
+  it('POST /api/ado/items/:id/comments requires text', async () => {
+    const res = await request(app).post('/api/ado/items/12345/comments').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/text/i);
+  });
+
+  it('GET /api/ado/work-item-types returns error without PAT', async () => {
+    const res = await request(app).get('/api/ado/work-item-types');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/ADO_PAT/);
+  });
+
+  it('GET /api/ado/team-members returns error without PAT', async () => {
+    const res = await request(app).get('/api/ado/team-members');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/ADO_PAT/);
+  });
+
+  it('GET /api/ado/iterations returns error without PAT', async () => {
+    const res = await request(app).get('/api/ado/iterations');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/ADO_PAT/);
+  });
+
+  it('GET /api/ado/area-paths returns error without PAT', async () => {
+    const res = await request(app).get('/api/ado/area-paths');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/ADO_PAT/);
   });
 });
 

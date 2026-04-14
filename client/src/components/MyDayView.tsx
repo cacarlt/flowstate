@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 import { Todo, CopilotSession } from '../types';
-import { Calendar, Clock, Circle, CircleDot, CircleCheck, AlertTriangle, Bot, CheckCircle, Zap, StickyNote } from 'lucide-react';
+import { Calendar, Clock, Circle, CircleDot, CircleCheck, AlertTriangle, Bot, CheckCircle, Zap, StickyNote, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
 import TaskDetailModal from './TaskDetailModal';
 
 type MyDayTask = Todo & { project_name: string; project_due_date: string | null };
 
 interface MyDayData {
+  date: string;
   dueTasks: MyDayTask[];
   scheduledToday: MyDayTask[];
   inProgress: MyDayTask[];
@@ -22,20 +23,41 @@ const COLUMNS = [
   { key: 'done' as const, label: 'Done', color: 'border-green-300 dark:border-green-700', headerBg: 'bg-green-50 dark:bg-green-950/30', dot: 'bg-green-500', icon: <CircleCheck size={14} className="text-green-500" /> },
 ];
 
+function formatDateStr(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+function getTodayStr(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function addDays(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export default function MyDayView() {
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayStr());
   const [data, setData] = useState<MyDayData | null>(null);
   const [selectedTask, setSelectedTask] = useState<MyDayTask | null>(null);
   const [dragTaskId, setDragTaskId] = useState<number | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [showUnscheduled, setShowUnscheduled] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
+
+  const isToday = selectedDate === getTodayStr();
 
   const load = useCallback(async () => {
-    const d = await api.getMyDay();
+    const d = await api.getMyDay(selectedDate);
     setData(d);
-  }, []);
+  }, [selectedDate]);
 
   useEffect(() => { load(); }, [load]);
-
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   if (!data) return null;
 
@@ -56,16 +78,12 @@ export default function MyDayView() {
 
   const isOverdue = (task: MyDayTask) => {
     if (!task.project_due_date) return false;
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    return task.project_due_date < todayStr;
+    return task.project_due_date < selectedDate;
   };
 
   const isDueToday = (task: MyDayTask) => {
     if (!task.project_due_date) return false;
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    return task.project_due_date === todayStr;
+    return task.project_due_date === selectedDate;
   };
 
   const handleDragStart = (e: React.DragEvent, taskId: number) => {
@@ -103,20 +121,76 @@ export default function MyDayView() {
 
   const handleModalUpdate = () => {
     load();
-    // Refresh selectedTask with latest data
     setSelectedTask(null);
+  };
+
+  const handleScheduleTask = async (todoId: number) => {
+    setScheduling(true);
+    try {
+      await api.scheduleTodos(selectedDate, [todoId]);
+      load();
+    } finally {
+      setScheduling(false);
+    }
   };
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
+      {/* Header with date picker */}
       <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">My Day</h2>
-          <p className="text-sm text-gray-400 dark:text-gray-500">{today}</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+              {isToday ? 'My Day' : formatDateStr(selectedDate)}
+            </h2>
+            {isToday && <p className="text-sm text-gray-400 dark:text-gray-500">{formatDateStr(selectedDate)}</p>}
+          </div>
+          {/* Date navigation */}
+          <div className="flex items-center gap-1 ml-2">
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
+              title="Previous day"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            {!isToday && (
+              <button
+                onClick={() => setSelectedDate(getTodayStr())}
+                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+              >
+                Today
+              </button>
+            )}
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
+              title="Next day"
+            >
+              <ChevronRight size={16} />
+            </button>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+              className="ml-1 px-2 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+            />
+          </div>
         </div>
-        {/* Stats pills */}
+        {/* Stats pills + Unscheduled toggle */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowUnscheduled(!showUnscheduled)}
+            className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-medium transition-colors ${
+              showUnscheduled
+                ? 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-700'
+                : 'text-gray-500 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+            }`}
+            title="Show unscheduled tasks"
+          >
+            <CalendarPlus size={12} />
+            <span>{data.unscheduled.length}</span>
+          </button>
           <StatPill icon={<AlertTriangle size={12} />} value={data.stats.totalDue} color="text-red-500 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" />
           <StatPill icon={<Zap size={12} />} value={data.stats.totalInProgress} color="text-blue-500 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800" />
           <StatPill icon={<Bot size={12} />} value={data.stats.totalActiveSessions} color="text-purple-500 bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800" />
@@ -140,50 +214,82 @@ export default function MyDayView() {
         </div>
       )}
 
-      {/* Kanban board */}
-      <div className="flex-1 grid grid-cols-3 gap-4 min-h-0">
-        {COLUMNS.map((col) => {
-          const tasks = tasksByStatus[col.key] || [];
-          const isDropTarget = dragOverColumn === col.key && dragTaskId !== null;
+      {/* Main content: kanban + optional unscheduled sidebar */}
+      <div className="flex-1 flex gap-4 min-h-0">
+        {/* Kanban board */}
+        <div className={`flex-1 grid grid-cols-3 gap-4 min-h-0`}>
+          {COLUMNS.map((col) => {
+            const tasks = tasksByStatus[col.key] || [];
+            const isDropTarget = dragOverColumn === col.key && dragTaskId !== null;
 
-          return (
-            <div
-              key={col.key}
-              className={`flex flex-col rounded-xl border-2 transition-colors ${isDropTarget ? 'border-blue-400 dark:border-blue-500 bg-blue-50/30 dark:bg-blue-950/20' : col.color} bg-gray-50/50 dark:bg-gray-800/30`}
-              onDragOver={(e) => handleDragOver(e, col.key)}
-              onDragLeave={() => setDragOverColumn(null)}
-              onDrop={(e) => handleDrop(e, col.key)}
-            >
-              {/* Column header */}
-              <div className={`flex items-center gap-2 px-4 py-3 ${col.headerBg} rounded-t-xl border-b border-gray-200 dark:border-gray-700`}>
-                <div className={`w-2.5 h-2.5 rounded-full ${col.dot}`} />
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{col.label}</span>
-                <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{tasks.length}</span>
-              </div>
+            return (
+              <div
+                key={col.key}
+                className={`flex flex-col rounded-xl border-2 transition-colors ${isDropTarget ? 'border-blue-400 dark:border-blue-500 bg-blue-50/30 dark:bg-blue-950/20' : col.color} bg-gray-50/50 dark:bg-gray-800/30`}
+                onDragOver={(e) => handleDragOver(e, col.key)}
+                onDragLeave={() => setDragOverColumn(null)}
+                onDrop={(e) => handleDrop(e, col.key)}
+              >
+                {/* Column header */}
+                <div className={`flex items-center gap-2 px-4 py-3 ${col.headerBg} rounded-t-xl border-b border-gray-200 dark:border-gray-700`}>
+                  <div className={`w-2.5 h-2.5 rounded-full ${col.dot}`} />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{col.label}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{tasks.length}</span>
+                </div>
 
-              {/* Cards */}
-              <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                {tasks.map((task) => (
-                  <KanbanCard
-                    key={task.id}
-                    task={task}
-                    isOverdue={isOverdue(task)}
-                    isDueToday={isDueToday(task)}
-                    isDragging={dragTaskId === task.id}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onClick={() => handleTaskClick(task)}
-                  />
-                ))}
-                {tasks.length === 0 && (
-                  <div className="text-center text-xs text-gray-400 dark:text-gray-500 py-8">
-                    {isDropTarget ? 'Drop here' : 'No tasks'}
-                  </div>
-                )}
+                {/* Cards */}
+                <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                  {tasks.map((task) => (
+                    <KanbanCard
+                      key={task.id}
+                      task={task}
+                      isOverdue={isOverdue(task)}
+                      isDueToday={isDueToday(task)}
+                      isDragging={dragTaskId === task.id}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                      onClick={() => handleTaskClick(task)}
+                    />
+                  ))}
+                  {tasks.length === 0 && (
+                    <div className="text-center text-xs text-gray-400 dark:text-gray-500 py-8">
+                      {isDropTarget ? 'Drop here' : 'No tasks'}
+                    </div>
+                  )}
+                </div>
               </div>
+            );
+          })}
+        </div>
+
+        {/* Unscheduled sidebar */}
+        {showUnscheduled && data.unscheduled.length > 0 && (
+          <div className="w-64 shrink-0 flex flex-col rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/20">
+            <div className="flex items-center gap-2 px-4 py-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-t-xl border-b border-indigo-200 dark:border-indigo-700">
+              <CalendarPlus size={14} className="text-indigo-500" />
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Unscheduled</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{data.unscheduled.length}</span>
             </div>
-          );
-        })}
+            <div className="flex-1 overflow-y-auto p-2 space-y-2">
+              {data.unscheduled.map((task) => (
+                <div
+                  key={task.id}
+                  className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 group"
+                >
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100 mb-1">{task.title}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{task.project_name}</p>
+                  <button
+                    onClick={() => handleScheduleTask(task.id)}
+                    disabled={scheduling}
+                    className="text-xs px-2 py-1 rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    Schedule for {isToday ? 'today' : selectedDate}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Task detail modal */}

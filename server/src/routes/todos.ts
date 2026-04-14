@@ -21,12 +21,12 @@ todosRouter.get('/', (req, res) => {
 
 // Create todo
 todosRouter.post('/', (req, res) => {
-  const { project_id, title, estimate_hours, due_date } = req.body;
+  const { project_id, title, estimate_hours, due_date, scheduled_date } = req.body;
   if (!project_id || !title) return res.status(400).json({ error: 'project_id and title required' });
 
   const { lastId } = run(
-    'INSERT INTO todos (project_id, title, estimate_hours, due_date) VALUES (?, ?, ?, ?)',
-    [project_id, title, estimate_hours || null, due_date || null]
+    'INSERT INTO todos (project_id, title, estimate_hours, due_date, scheduled_date) VALUES (?, ?, ?, ?, ?)',
+    [project_id, title, estimate_hours || null, due_date || null, scheduled_date || null]
   );
 
   res.status(201).json(get('SELECT * FROM todos WHERE id = ?', [lastId]));
@@ -34,7 +34,7 @@ todosRouter.post('/', (req, res) => {
 
 // Update todo
 todosRouter.put('/:id', (req, res) => {
-  const { title, estimate_hours, due_date, status, sort_order, project_id, notes } = req.body;
+  const { title, estimate_hours, due_date, status, sort_order, project_id, notes, scheduled_date } = req.body;
   const fields: string[] = [];
   const values: any[] = [];
 
@@ -42,6 +42,7 @@ todosRouter.put('/:id', (req, res) => {
   if (notes !== undefined) { fields.push('notes = ?'); values.push(notes); }
   if (estimate_hours !== undefined) { fields.push('estimate_hours = ?'); values.push(estimate_hours); }
   if (due_date !== undefined) { fields.push('due_date = ?'); values.push(due_date); }
+  if (scheduled_date !== undefined) { fields.push('scheduled_date = ?'); values.push(scheduled_date); }
   if (status !== undefined) { fields.push('status = ?'); values.push(status); }
   if (sort_order !== undefined) { fields.push('sort_order = ?'); values.push(sort_order); }
   if (project_id !== undefined) { fields.push('project_id = ?'); values.push(project_id); }

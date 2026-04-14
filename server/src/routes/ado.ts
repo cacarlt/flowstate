@@ -1,5 +1,18 @@
 import { Router } from 'express';
-import { all, run } from '../db';
+import { all, run, get } from '../db';
+import {
+  updateWorkItemState,
+  updateWorkItem,
+  createWorkItem,
+  addComment,
+  getComments,
+  getWorkItem,
+  getWorkItemTypes,
+  getTeamMembers,
+  getIterations,
+  getAreaPaths,
+  AdoClientError,
+} from '../ado/client';
 
 export const adoRouter = Router();
 
@@ -20,6 +33,37 @@ function adoHeaders() {
 
 function adoBaseUrl() {
   return `https://dev.azure.com/${ADO_ORG}/${ADO_PROJECT}/_apis`;
+}
+
+// Helper to handle AdoClientError in routes
+function handleAdoError(err: any, res: any) {
+  if (err instanceof AdoClientError) {
+    return res.status(err.statusCode).json({ error: err.message });
+  }
+  return res.status(500).json({ error: err.message });
+}
+
+// Helper to sync a single ADO work item response back to local DB
+function syncLocalItem(wi: any) {
+  const f = wi.fields;
+  const url = wi._links?.html?.href || `https://dev.azure.com/${process.env.ADO_ORG || 'IdentityDivision'}/${process.env.ADO_PROJECT || 'Engineering'}/_workitems/edit/${wi.id}`;
+  const sprintParts = (f['System.IterationPath'] || '').split('\\');
+  const sprintName = sprintParts[sprintParts.length - 1] || null;
+
+  const existing = all('SELECT id FROM ado_items WHERE ado_work_item_id = ?', [wi.id]);
+  if (existing.length > 0) {
+    run(
+      `UPDATE ado_items SET type=?, url=?, title=?, sprint_name=?, state=?, assigned_to=?, last_synced_at=datetime('now') WHERE ado_work_item_id=?`,
+      [f['System.WorkItemType'], url, f['System.Title'], sprintName, f['System.State'], f['System.AssignedTo']?.displayName || null, wi.id]
+    );
+    return get('SELECT * FROM ado_items WHERE ado_work_item_id = ?', [wi.id]);
+  } else {
+    const { lastId } = run(
+      `INSERT INTO ado_items (ado_work_item_id, type, url, title, sprint_name, state, assigned_to) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [wi.id, f['System.WorkItemType'], url, f['System.Title'], sprintName, f['System.State'], f['System.AssignedTo']?.displayName || null]
+    );
+    return get('SELECT * FROM ado_items WHERE id = ?', [lastId]);
+  }
 }
 
 // Get locally stored ADO items with linked project/todo info
@@ -226,4 +270,145 @@ adoRouter.get('/current-sprint', async (_req, res) => {
 adoRouter.delete('/items/:id', (req, res) => {
   run('DELETE FROM ado_items WHERE id = ?', [req.params.id]);
   res.status(204).end();
+});
+
+// === ADO WRITE-BACK ENDPOINTS ===
+
+// Change work item state
+adoRouter.patch('/items/:adoWorkItemId/state', async (req, res) => {
+  try {
+    const { state } = req.body;
+    if (!state) return res.status(400).json({ error: 'state is required' });
+    const wi = await updateWorkItemState(Number(req.params.adoWorkItemId), state);
+    const localItem = syncLocalItem(wi);
+    res.json(localItem);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Update work item fields (title, description, assignedTo, etc.)
+adoRouter.patch('/items/:adoWorkItemId', async (req, res) => {
+  try {
+    const { title, description, assignedTo, areaPath, iterationPath, state, priority, effort, tags } = req.body;
+    const fields: Record<string, any> = {};
+    if (title !== undefined) fields.title = title;
+    if (description !== undefined) fields.description = description;
+    if (assignedTo !== undefined) fields.assignedTo = assignedTo;
+    if (areaPath !== undefined) fields.areaPath = areaPath;
+    if (iterationPath !== undefined) fields.iterationPath = iterationPath;
+    if (state !== undefined) fields.state = state;
+    if (priority !== undefined) fields.priority = priority;
+    if (effort !== undefined) fields.effort = effort;
+    if (tags !== undefined) fields.tags = tags;
+
+    if (Object.keys(fields).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    const wi = await updateWorkItem(Number(req.params.adoWorkItemId), fields);
+    const localItem = syncLocalItem(wi);
+    res.json(localItem);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Create new work item in ADO
+adoRouter.post('/items', async (req, res) => {
+  try {
+    const { type, title, description, assignedTo, areaPath, iterationPath, parentId, todoId } = req.body;
+    if (!type || !title) return res.status(400).json({ error: 'type and title are required' });
+
+    const fields: Record<string, any> = { title };
+    if (description) fields.description = description;
+    if (assignedTo) fields.assignedTo = assignedTo;
+    if (areaPath) fields.areaPath = areaPath;
+    if (iterationPath) fields.iterationPath = iterationPath;
+
+    const wi = await createWorkItem(type, fields, parentId);
+    const localItem = syncLocalItem(wi);
+
+    // Auto-link to todo if requested
+    if (todoId) {
+      run('INSERT OR IGNORE INTO todo_ado_links (todo_id, ado_item_id) VALUES (?, ?)', [todoId, localItem.id]);
+    }
+
+    res.status(201).json(localItem);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Add comment to work item
+adoRouter.post('/items/:adoWorkItemId/comments', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: 'text is required' });
+    const comment = await addComment(Number(req.params.adoWorkItemId), text);
+    res.status(201).json(comment);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Get comments for a work item
+adoRouter.get('/items/:adoWorkItemId/comments', async (req, res) => {
+  try {
+    const comments = await getComments(Number(req.params.adoWorkItemId));
+    res.json(comments);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Get a single work item with full details from ADO
+adoRouter.get('/items/:adoWorkItemId/details', async (req, res) => {
+  try {
+    const wi = await getWorkItem(Number(req.params.adoWorkItemId));
+    res.json(wi);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Get available work item types
+adoRouter.get('/work-item-types', async (_req, res) => {
+  try {
+    const types = await getWorkItemTypes();
+    res.json(types);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Get team members for assignment
+adoRouter.get('/team-members', async (req, res) => {
+  try {
+    const team = req.query.team as string | undefined;
+    const members = await getTeamMembers(team);
+    res.json(members);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Get iterations (sprints)
+adoRouter.get('/iterations', async (_req, res) => {
+  try {
+    const iterations = await getIterations();
+    res.json(iterations);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
+});
+
+// Get area paths
+adoRouter.get('/area-paths', async (_req, res) => {
+  try {
+    const areas = await getAreaPaths();
+    res.json(areas);
+  } catch (err: any) {
+    handleAdoError(err, res);
+  }
 });
