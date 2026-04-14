@@ -172,35 +172,49 @@ adoRouter.post('/sync', async (_req, res) => {
   try {
     const areaFilter = ADO_AREA_PATH ? ` AND [System.AreaPath] UNDER '${ADO_AREA_PATH}'` : '';
 
-    // Query 1: Items assigned to me
-    const myWiql = {
-      query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = @Me AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed'${areaFilter} ORDER BY [System.ChangedDate] DESC`
-    };
+    let allWiqlResults: { workItems: { id: number }[] }[] = [];
 
-    // Query 2: Unassigned items in the same area path
-    const unassignedWiql = {
-      query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = '' AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed'${areaFilter} ORDER BY [System.ChangedDate] DESC`
-    };
-
-    const [myRes, unRes] = await Promise.all([
-      fetch(`${adoBaseUrl()}/wit/wiql?api-version=7.1`, {
-        method: 'POST', headers: adoHeaders(), body: JSON.stringify(myWiql),
-      }),
-      fetch(`${adoBaseUrl()}/wit/wiql?api-version=7.1`, {
-        method: 'POST', headers: adoHeaders(), body: JSON.stringify(unassignedWiql),
-      }),
-    ]);
-
-    if (!myRes.ok) {
-      const text = await myRes.text();
-      return res.status(myRes.status).json({ error: `ADO WIQL failed: ${text}` });
+    if (ADO_AREA_PATH) {
+      // Area path is set — pull ALL items in this area (any assignee)
+      const areaWiql = {
+        query: `SELECT [System.Id] FROM WorkItems WHERE [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed'${areaFilter} ORDER BY [System.ChangedDate] DESC`
+      };
+      const areaRes = await fetch(`${adoBaseUrl()}/wit/wiql?api-version=7.1`, {
+        method: 'POST', headers: adoHeaders(), body: JSON.stringify(areaWiql),
+      });
+      if (!areaRes.ok) {
+        const text = await areaRes.text();
+        return res.status(areaRes.status).json({ error: `ADO WIQL failed: ${text}` });
+      }
+      allWiqlResults.push(await areaRes.json() as { workItems: { id: number }[] });
+    } else {
+      // No area path — fall back to assigned-to-me + unassigned
+      const myWiql = {
+        query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = @Me AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed' ORDER BY [System.ChangedDate] DESC`
+      };
+      const unassignedWiql = {
+        query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = '' AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed' ORDER BY [System.ChangedDate] DESC`
+      };
+      const [myRes, unRes] = await Promise.all([
+        fetch(`${adoBaseUrl()}/wit/wiql?api-version=7.1`, {
+          method: 'POST', headers: adoHeaders(), body: JSON.stringify(myWiql),
+        }),
+        fetch(`${adoBaseUrl()}/wit/wiql?api-version=7.1`, {
+          method: 'POST', headers: adoHeaders(), body: JSON.stringify(unassignedWiql),
+        }),
+      ]);
+      if (!myRes.ok) {
+        const text = await myRes.text();
+        return res.status(myRes.status).json({ error: `ADO WIQL failed: ${text}` });
+      }
+      allWiqlResults.push(await myRes.json() as { workItems: { id: number }[] });
+      if (unRes.ok) allWiqlResults.push(await unRes.json() as { workItems: { id: number }[] });
     }
 
-    const myData = await myRes.json() as { workItems: { id: number }[] };
-    const unData = unRes.ok ? await unRes.json() as { workItems: { id: number }[] } : { workItems: [] };
-
     const idSet = new Set<number>();
-    for (const wi of [...myData.workItems, ...unData.workItems]) { idSet.add(wi.id); }
+    for (const data of allWiqlResults) {
+      for (const wi of (data.workItems || [])) { idSet.add(wi.id); }
+    }
     const ids = [...idSet];
 
     if (ids.length === 0) {
