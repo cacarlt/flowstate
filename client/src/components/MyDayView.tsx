@@ -42,6 +42,7 @@ function addDays(dateStr: string, days: number): string {
 }
 
 export default function MyDayView() {
+  const [todayStr, setTodayStr] = useState<string>(getTodayStr());
   const [selectedDate, setSelectedDate] = useState<string>(getTodayStr());
   const [data, setData] = useState<MyDayData | null>(null);
   const [selectedTask, setSelectedTask] = useState<MyDayTask | null>(null);
@@ -50,7 +51,22 @@ export default function MyDayView() {
   const [showUnscheduled, setShowUnscheduled] = useState(false);
   const [scheduling, setScheduling] = useState(false);
 
-  const isToday = selectedDate === getTodayStr();
+  // Check every 60s if the day has rolled over; update today + selectedDate if still on old today
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = getTodayStr();
+      setTodayStr(prev => {
+        if (prev !== now) {
+          setSelectedDate(sel => sel === prev ? now : sel);
+          return now;
+        }
+        return prev;
+      });
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isToday = selectedDate === todayStr;
 
   const load = useCallback(async () => {
     const d = await api.getMyDay(selectedDate);
@@ -76,14 +92,15 @@ export default function MyDayView() {
     tasksByStatus[task.status]?.push(task);
   }
 
+  // Overdue is based on actual today, not the viewed date
   const isOverdue = (task: MyDayTask) => {
     if (!task.project_due_date) return false;
-    return task.project_due_date < selectedDate;
+    return task.project_due_date < todayStr;
   };
 
   const isDueToday = (task: MyDayTask) => {
     if (!task.project_due_date) return false;
-    return task.project_due_date === selectedDate;
+    return task.project_due_date === todayStr;
   };
 
   const handleDragStart = (e: React.DragEvent, taskId: number) => {
@@ -156,7 +173,7 @@ export default function MyDayView() {
             </button>
             {!isToday && (
               <button
-                onClick={() => setSelectedDate(getTodayStr())}
+                onClick={() => setSelectedDate(todayStr)}
                 className="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
               >
                 Today

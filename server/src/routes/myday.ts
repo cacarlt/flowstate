@@ -15,12 +15,14 @@ mydayRouter.get('/', (req, res) => {
   }
 
   // Tasks whose project delivery date is today or past (due/overdue), excluding done
+  // Respect scheduled_date pinning: if a task is scheduled for a different day, skip it
   const dueTasks = all(`
     SELECT t.*, p.name as project_name, p.due_date as project_due_date FROM todos t
     JOIN projects p ON p.id = t.project_id
     WHERE p.due_date IS NOT NULL AND p.due_date <= ? AND t.status != 'done'
+      AND (t.scheduled_date IS NULL OR t.scheduled_date = ?)
     ORDER BY p.due_date, t.sort_order
-  `, [today]);
+  `, [today, today]);
 
   // Tasks scheduled for this date (via scheduled_date or due_date), not done, not already in-progress
   const scheduledToday = all(`
@@ -30,13 +32,14 @@ mydayRouter.get('/', (req, res) => {
     ORDER BY t.sort_order
   `, [today, today]);
 
-  // In-progress tasks (regardless of dates)
+  // In-progress tasks — respect scheduled_date pinning
   const inProgress = all(`
     SELECT t.*, p.name as project_name, p.due_date as project_due_date FROM todos t
     LEFT JOIN projects p ON p.id = t.project_id
     WHERE t.status = 'in_progress'
+      AND (t.scheduled_date IS NULL OR t.scheduled_date = ?)
     ORDER BY t.sort_order
-  `);
+  `, [today]);
 
   // Tasks with no scheduled date and no due_date that are still todo
   const unscheduled = all(`
