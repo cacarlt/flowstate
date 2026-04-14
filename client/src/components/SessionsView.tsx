@@ -10,6 +10,8 @@ export default function SessionsView() {
   const [showForm, setShowForm] = useState(false);
   const [openLogs, setOpenLogs] = useState<Set<number>>(new Set());
   const [logLinesMap, setLogLinesMap] = useState<Record<number, string[]>>({});
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({
     notes: '', task_prompt: '', session_url: '', session_id: '', repo: '', branch: '',
     project_id: '', todo_id: '',
@@ -27,6 +29,28 @@ export default function SessionsView() {
 
   const logEndRef = useRef<HTMLDivElement>(null);
   const eventSources = useRef<Record<number, EventSource>>({});
+  const logEndRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  // Auto-scroll logs to bottom when new lines arrive
+  useEffect(() => {
+    for (const id of Object.keys(logLinesMap)) {
+      logEndRefs.current[Number(id)]?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logLinesMap]);
+
+  // Filter sessions
+  const filteredSessions = sessions.filter((s) => {
+    if (filterStatus !== 'all' && s.status !== filterStatus) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matches = (s.notes || '').toLowerCase().includes(q)
+        || (s.repo || '').toLowerCase().includes(q)
+        || (s.task_prompt || '').toLowerCase().includes(q)
+        || (s.project_name || '').toLowerCase().includes(q);
+      if (!matches) return false;
+    }
+    return true;
+  });
 
   const toggleLogs = (sessionId: number) => {
     setOpenLogs((prev) => {
@@ -229,8 +253,37 @@ export default function SessionsView() {
         </div>
       )}
 
+      {/* Filters */}
+      {sessions.length > 0 && (
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {['all', 'logged', 'launched', 'in_progress', 'completed', 'abandoned'].map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilterStatus(s)}
+                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  filterStatus === s
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {s === 'all' ? 'All' : s === 'in_progress' ? 'Active' : s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            placeholder="Search notes, repo..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 text-sm flex-1 max-w-xs"
+          />
+          <span className="text-xs text-gray-400 dark:text-gray-500">{filteredSessions.length} of {sessions.length}</span>
+        </div>
+      )}
+
       <div className="space-y-2">
-        {sessions.map((session) => {
+        {filteredSessions.map((session) => {
           const cmd = getLaunchCmd(session);
           return (
             <div key={session.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm group overflow-hidden">
@@ -332,7 +385,7 @@ export default function SessionsView() {
                     {(logLinesMap[session.id] || []).map((line, i) => (
                       <div key={i} className="whitespace-pre-wrap leading-relaxed">{line}</div>
                     ))}
-                    <div ref={logEndRef} />
+                    <div ref={(el) => { logEndRefs.current[session.id] = el; }} />
                   </div>
                 </div>
               )}

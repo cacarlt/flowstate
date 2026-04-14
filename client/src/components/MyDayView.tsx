@@ -14,7 +14,7 @@ interface MyDayData {
   unscheduled: MyDayTask[];
   completedToday: MyDayTask[];
   activeSessions: (CopilotSession & { project_name: string; todo_title: string })[];
-  stats: { totalDue: number; totalInProgress: number; totalCompletedToday: number; totalActiveSessions: number };
+  stats: { totalDue: number; totalInProgress: number; totalCompletedToday: number; totalActiveSessions: number; plannedHours: number };
 }
 
 const COLUMNS = [
@@ -191,6 +191,12 @@ export default function MyDayView() {
             <CalendarPlus size={12} />
             <span>{data.unscheduled.length}</span>
           </button>
+          {data.stats.plannedHours > 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-medium text-cyan-500 bg-cyan-50 dark:bg-cyan-950 border-cyan-200 dark:border-cyan-800">
+              <Clock size={12} />
+              <span>{data.stats.plannedHours}h</span>
+            </div>
+          )}
           <StatPill icon={<AlertTriangle size={12} />} value={data.stats.totalDue} color="text-orange-500 bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800" />
           <StatPill icon={<Zap size={12} />} value={data.stats.totalInProgress} color="text-blue-500 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800" />
           <StatPill icon={<Bot size={12} />} value={data.stats.totalActiveSessions} color="text-purple-500 bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800" />

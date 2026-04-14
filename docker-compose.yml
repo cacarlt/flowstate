@@ -29,6 +29,11 @@ services:
       - default
       - traefik-proxy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
 
 networks:
   traefik-proxy:

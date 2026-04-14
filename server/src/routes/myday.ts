@@ -44,7 +44,6 @@ mydayRouter.get('/', (req, res) => {
     LEFT JOIN projects p ON p.id = t.project_id
     WHERE t.scheduled_date IS NULL AND t.due_date IS NULL AND t.status = 'todo'
     ORDER BY t.sort_order
-    LIMIT 10
   `);
 
   // Tasks completed on this date
@@ -64,12 +63,17 @@ mydayRouter.get('/', (req, res) => {
     ORDER BY s.id DESC
   `);
 
+  // Planned hours for the day (scheduled + in-progress tasks)
+  const allDayTasks = [...scheduledToday, ...inProgress];
+  const plannedHours = allDayTasks.reduce((sum: number, t: any) => sum + (t.estimate_hours || 0), 0);
+
   // Summary stats
   const stats = {
     totalDue: dueTasks.length,
     totalInProgress: inProgress.length,
     totalCompletedToday: completedToday.length,
     totalActiveSessions: activeSessions.length,
+    plannedHours,
   };
 
   res.json({ date: today, dueTasks, scheduledToday, inProgress, unscheduled, completedToday, activeSessions, stats });

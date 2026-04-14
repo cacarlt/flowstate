@@ -37,6 +37,11 @@ export interface AdoItem {
   sprint_name: string | null;
   state: string | null;
   assigned_to: string | null;
+  description: string | null;
+  effort: number | null;
+  priority: number | null;
+  tags: string | null;
+  parent_id: number | null;
   last_synced_at: string;
   linked_todos: { todo_id: number; todo_title: string; project_name: string }[];
   linked_projects: { project_id: number; project_name: string }[];

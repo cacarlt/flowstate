@@ -50,18 +50,23 @@ function syncLocalItem(wi: any) {
   const url = wi._links?.html?.href || `https://dev.azure.com/${process.env.ADO_ORG || 'IdentityDivision'}/${process.env.ADO_PROJECT || 'Engineering'}/_workitems/edit/${wi.id}`;
   const sprintParts = (f['System.IterationPath'] || '').split('\\');
   const sprintName = sprintParts[sprintParts.length - 1] || null;
+  const description = f['System.Description'] || null;
+  const effort = f['Microsoft.VSTS.Scheduling.Effort'] ?? null;
+  const priority = f['Microsoft.VSTS.Common.Priority'] ?? null;
+  const tags = f['System.Tags'] || null;
+  const parentId = f['System.Parent'] ?? null;
 
   const existing = all('SELECT id FROM ado_items WHERE ado_work_item_id = ?', [wi.id]);
   if (existing.length > 0) {
     run(
-      `UPDATE ado_items SET type=?, url=?, title=?, sprint_name=?, state=?, assigned_to=?, last_synced_at=datetime('now') WHERE ado_work_item_id=?`,
-      [f['System.WorkItemType'], url, f['System.Title'], sprintName, f['System.State'], f['System.AssignedTo']?.displayName || null, wi.id]
+      `UPDATE ado_items SET type=?, url=?, title=?, sprint_name=?, state=?, assigned_to=?, description=?, effort=?, priority=?, tags=?, parent_id=?, last_synced_at=datetime('now') WHERE ado_work_item_id=?`,
+      [f['System.WorkItemType'], url, f['System.Title'], sprintName, f['System.State'], f['System.AssignedTo']?.displayName || null, description, effort, priority, tags, parentId, wi.id]
     );
     return get('SELECT * FROM ado_items WHERE ado_work_item_id = ?', [wi.id]);
   } else {
     const { lastId } = run(
-      `INSERT INTO ado_items (ado_work_item_id, type, url, title, sprint_name, state, assigned_to) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [wi.id, f['System.WorkItemType'], url, f['System.Title'], sprintName, f['System.State'], f['System.AssignedTo']?.displayName || null]
+      `INSERT INTO ado_items (ado_work_item_id, type, url, title, sprint_name, state, assigned_to, description, effort, priority, tags, parent_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [wi.id, f['System.WorkItemType'], url, f['System.Title'], sprintName, f['System.State'], f['System.AssignedTo']?.displayName || null, description, effort, priority, tags, parentId]
     );
     return get('SELECT * FROM ado_items WHERE id = ?', [lastId]);
   }
@@ -225,7 +230,7 @@ adoRouter.post('/sync', async (_req, res) => {
     let synced = 0;
     for (let i = 0; i < ids.length; i += 200) {
       const batch = ids.slice(i, i + 200);
-      const detailRes = await fetch(`${adoBaseUrl()}/wit/workitems?ids=${batch.join(',')}&fields=System.Id,System.Title,System.WorkItemType,System.State,System.AssignedTo,System.IterationPath&api-version=7.1`, {
+      const detailRes = await fetch(`${adoBaseUrl()}/wit/workitems?ids=${batch.join(',')}&fields=System.Id,System.Title,System.WorkItemType,System.State,System.AssignedTo,System.IterationPath,System.Description,Microsoft.VSTS.Scheduling.Effort,Microsoft.VSTS.Common.Priority,System.Tags,System.Parent&api-version=7.1`, {
         headers: adoHeaders(),
       });
 
@@ -233,24 +238,7 @@ adoRouter.post('/sync', async (_req, res) => {
       const detailData = await detailRes.json() as { value: any[] };
 
       for (const wi of detailData.value) {
-        const f = wi.fields;
-        const url = `https://dev.azure.com/${ADO_ORG}/${ADO_PROJECT}/_workitems/edit/${wi.id}`;
-        const sprintParts = (f['System.IterationPath'] || '').split('\\');
-        const sprintName = sprintParts[sprintParts.length - 1] || null;
-
-        // Check if exists
-        const existing = all('SELECT id FROM ado_items WHERE ado_work_item_id = ?', [wi.id]);
-        if (existing.length > 0) {
-          run(
-            `UPDATE ado_items SET type=?, url=?, title=?, sprint_name=?, state=?, assigned_to=?, last_synced_at=datetime('now') WHERE ado_work_item_id=?`,
-            [f['System.WorkItemType'], url, f['System.Title'], sprintName, f['System.State'], f['System.AssignedTo']?.displayName || null, wi.id]
-          );
-        } else {
-          run(
-            `INSERT INTO ado_items (ado_work_item_id, type, url, title, sprint_name, state, assigned_to) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [wi.id, f['System.WorkItemType'], url, f['System.Title'], sprintName, f['System.State'], f['System.AssignedTo']?.displayName || null]
-          );
-        }
+        syncLocalItem(wi);
         synced++;
       }
     }

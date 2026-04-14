@@ -242,4 +242,41 @@ function runMigrations(db: SqlJsDb) {
   if (!todoCols.has('scheduled_date')) {
     try { db.run('ALTER TABLE todos ADD COLUMN scheduled_date TEXT'); } catch (_) {}
   }
+
+  // ADO items migrations
+  const adoCols = new Set<string>();
+  try {
+    const stmt4 = db.prepare("PRAGMA table_info(ado_items)");
+    while (stmt4.step()) {
+      const row = stmt4.getAsObject();
+      adoCols.add(row.name as string);
+    }
+    stmt4.free();
+  } catch (_) { return; }
+
+  const adoMigrations: [string, string][] = [
+    ['description', 'ALTER TABLE ado_items ADD COLUMN description TEXT'],
+    ['effort', 'ALTER TABLE ado_items ADD COLUMN effort REAL'],
+    ['priority', 'ALTER TABLE ado_items ADD COLUMN priority INTEGER'],
+    ['tags', 'ALTER TABLE ado_items ADD COLUMN tags TEXT'],
+    ['parent_id', 'ALTER TABLE ado_items ADD COLUMN parent_id INTEGER'],
+  ];
+  for (const [col, sql] of adoMigrations) {
+    if (!adoCols.has(col)) {
+      try { db.run(sql); } catch (_) {}
+    }
+  }
+
+  // Indexes for query performance
+  const indexes = [
+    'CREATE INDEX IF NOT EXISTS idx_todos_project_id ON todos(project_id)',
+    'CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status)',
+    'CREATE INDEX IF NOT EXISTS idx_todos_scheduled_date ON todos(scheduled_date)',
+    'CREATE INDEX IF NOT EXISTS idx_ado_items_sprint ON ado_items(sprint_name)',
+    'CREATE INDEX IF NOT EXISTS idx_ado_items_state ON ado_items(state)',
+    'CREATE INDEX IF NOT EXISTS idx_sessions_status ON copilot_sessions(status)',
+  ];
+  for (const sql of indexes) {
+    try { db.run(sql); } catch (_) {}
+  }
 }

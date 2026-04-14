@@ -248,7 +248,25 @@ function KanbanCard({ item, typeIcon, draggable, onStateChange, stateChanging }:
         <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="ml-auto text-gray-300 hover:text-blue-500"><ExternalLink size={10} /></a>
       </div>
       <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-800 dark:text-gray-100 font-medium leading-snug line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 block">{item.title}</a>
-      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+      {/* Effort + Priority row */}
+      {(item.effort !== null || item.priority !== null || item.tags) && (
+        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+          {item.priority !== null && (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+              item.priority === 1 ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-300' :
+              item.priority === 2 ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-300' :
+              'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+            }`}>P{item.priority}</span>
+          )}
+          {item.effort !== null && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-medium">{item.effort}pt</span>
+          )}
+          {item.tags && item.tags.split('; ').slice(0, 2).map((tag) => (
+            <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 truncate max-w-[60px]" title={tag}>{tag}</span>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
         {/* State change button */}
         <div className="relative">
           <button

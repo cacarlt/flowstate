@@ -35,9 +35,18 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('myday');
   const [dark, toggleDark] = useDarkMode();
   const [config, setConfig] = useState<AppConfig | null>(null);
+  const [badges, setBadges] = useState<Record<string, number>>({});
 
   useEffect(() => {
     api.getConfig().then(setConfig).catch(() => {});
+    // Fetch badge counts
+    api.getMyDay().then((d: any) => {
+      setBadges((prev) => ({
+        ...prev,
+        myday: (d.stats?.totalDue || 0) + (d.stats?.totalInProgress || 0),
+        sessions: d.stats?.totalActiveSessions || 0,
+      }));
+    }).catch(() => {});
   }, []);
 
   const visibleTabs = allTabs.filter(
@@ -83,6 +92,9 @@ export default function App() {
               >
                 {tab.icon}
                 <span className="hidden sm:inline">{tab.label}</span>
+                {badges[tab.key] > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-600 text-white leading-none">{badges[tab.key]}</span>
+                )}
               </button>
             ))}
           </nav>
