@@ -33,9 +33,11 @@ export class AdoClientError extends Error {
 }
 
 async function adoFetch(url: string, options: RequestInit = {}): Promise<any> {
+  const optHeaders = (options.headers || {}) as Record<string, string>;
+  const contentType = optHeaders['Content-Type'] || 'application/json';
   const res = await fetch(url, {
     ...options,
-    headers: { ...headers(options.headers?.['Content-Type' as keyof HeadersInit] as string || 'application/json'), ...options.headers as any },
+    headers: { ...headers(contentType), ...optHeaders },
   });
   if (!res.ok) {
     const text = await res.text();
