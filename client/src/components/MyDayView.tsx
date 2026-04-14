@@ -20,7 +20,7 @@ interface MyDayData {
 const COLUMNS = [
   { key: 'todo' as const, label: 'To Do', color: 'border-gray-300 dark:border-gray-600', headerBg: 'bg-gray-50 dark:bg-gray-800', dot: 'bg-gray-400', icon: <Circle size={14} /> },
   { key: 'in_progress' as const, label: 'In Progress', color: 'border-blue-300 dark:border-blue-700', headerBg: 'bg-blue-50 dark:bg-blue-950/30', dot: 'bg-blue-500', icon: <CircleDot size={14} className="text-blue-500" /> },
-  { key: 'done' as const, label: 'Done', color: 'border-green-300 dark:border-green-700', headerBg: 'bg-green-50 dark:bg-green-950/30', dot: 'bg-green-500', icon: <CircleCheck size={14} className="text-green-500" /> },
+  { key: 'done' as const, label: 'Done', color: 'border-teal-300 dark:border-teal-700', headerBg: 'bg-teal-50 dark:bg-teal-950/30', dot: 'bg-teal-500', icon: <CircleCheck size={14} className="text-teal-500" /> },
 ];
 
 function formatDateStr(dateStr: string): string {
@@ -191,10 +191,10 @@ export default function MyDayView() {
             <CalendarPlus size={12} />
             <span>{data.unscheduled.length}</span>
           </button>
-          <StatPill icon={<AlertTriangle size={12} />} value={data.stats.totalDue} color="text-red-500 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" />
+          <StatPill icon={<AlertTriangle size={12} />} value={data.stats.totalDue} color="text-orange-500 bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800" />
           <StatPill icon={<Zap size={12} />} value={data.stats.totalInProgress} color="text-blue-500 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800" />
           <StatPill icon={<Bot size={12} />} value={data.stats.totalActiveSessions} color="text-purple-500 bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800" />
-          <StatPill icon={<CheckCircle size={12} />} value={data.stats.totalCompletedToday} color="text-green-500 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800" />
+          <StatPill icon={<CheckCircle size={12} />} value={data.stats.totalCompletedToday} color="text-teal-500 bg-teal-50 dark:bg-teal-950 border-teal-200 dark:border-teal-800" />
         </div>
       </div>
 
@@ -331,7 +331,7 @@ function KanbanCard({ task, isOverdue, isDueToday, isDragging, onDragStart, onDr
       className={`bg-white dark:bg-gray-900 rounded-lg border p-3 cursor-pointer transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 select-none ${
         isDragging ? 'opacity-40 scale-95' : ''
       } ${
-        isOverdue ? 'border-red-300 dark:border-red-700' : 'border-gray-200 dark:border-gray-700'
+        isOverdue ? 'border-orange-300 dark:border-orange-700' : 'border-gray-200 dark:border-gray-700'
       }`}
     >
       {/* Title */}
@@ -345,7 +345,7 @@ function KanbanCard({ task, isOverdue, isDueToday, isDragging, onDragStart, onDr
       {/* Badges row */}
       <div className="flex flex-wrap items-center gap-1.5">
         {isOverdue && (
-          <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 font-medium">
+          <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 font-medium">
             <AlertTriangle size={10} /> Overdue
           </span>
         )}

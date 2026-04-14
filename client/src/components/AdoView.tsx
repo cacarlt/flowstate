@@ -7,7 +7,7 @@ const KANBAN_COLUMNS = [
   { key: 'New', label: 'New', color: 'border-gray-300 dark:border-gray-600', headerBg: 'bg-gray-50 dark:bg-gray-800', dot: 'bg-gray-400' },
   { key: 'In Progress', label: 'In Progress', color: 'border-blue-300 dark:border-blue-700', headerBg: 'bg-blue-50 dark:bg-blue-950/30', dot: 'bg-blue-500' },
   { key: 'In Review', label: 'In Review', color: 'border-yellow-300 dark:border-yellow-700', headerBg: 'bg-yellow-50 dark:bg-yellow-950/30', dot: 'bg-yellow-500' },
-  { key: 'Done', label: 'Done', color: 'border-green-300 dark:border-green-700', headerBg: 'bg-green-50 dark:bg-green-950/30', dot: 'bg-green-500' },
+  { key: 'Done', label: 'Done', color: 'border-teal-300 dark:border-teal-700', headerBg: 'bg-teal-50 dark:bg-teal-950/30', dot: 'bg-teal-500' },
 ];
 
 const ADO_STATES = ['New', 'Active', 'In Progress', 'Resolved', 'Closed', 'Done', 'Committed'];
@@ -134,7 +134,7 @@ export default function AdoView() {
           <button onClick={() => setLinkMode(!linkMode)} className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${linkMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
             <Link2 size={14} /> {linkMode ? 'Exit Link Mode' : 'Link to Tasks'}
           </button>
-          <button onClick={() => setShowCreateModal(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-1.5">
+          <button onClick={() => setShowCreateModal(true)} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors flex items-center gap-1.5">
             <Plus size={14} /> New Item
           </button>
           <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
@@ -153,22 +153,22 @@ export default function AdoView() {
         {/* PAT — minimal */}
         {patStatus && patOk && (
           <div className="flex items-center gap-2 mb-3 text-xs text-gray-400 dark:text-gray-500">
-            <Shield size={12} className="text-green-500" />
+            <Shield size={12} className="text-teal-500" />
             <span>PAT: {patStatus.status === 'active' ? `Active (${patStatus.daysRemaining}d)` : 'Configured'}</span>
             {patStatus.organization && <span>· {patStatus.organization}</span>}
           </div>
         )}
         {patStatus && !patOk && (
-          <div className="border border-red-200 dark:border-red-800 rounded-lg mb-3 px-4 py-2 flex items-center gap-3">
-            <Shield size={14} className="text-red-500" />
+          <div className="border border-orange-200 dark:border-orange-800 rounded-lg mb-3 px-4 py-2 flex items-center gap-3">
+            <Shield size={14} className="text-orange-500" />
             <span className="text-sm text-gray-700 dark:text-gray-200 flex-1">{patStatus.status === 'not_configured' ? 'PAT not configured' : patStatus.status === 'expired' ? 'PAT expired' : `PAT expiring — ${patStatus.daysRemaining}d`}</span>
             {patStatus.manageUrl && <a href={patStatus.manageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline flex items-center gap-1">Manage <ExternalLink size={10} /></a>}
           </div>
         )}
 
-        {error && <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg p-3 mb-3 text-sm">{error}</div>}
+        {error && <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 rounded-lg p-3 mb-3 text-sm">{error}</div>}
         {!configured && <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-3 text-sm text-amber-800 dark:text-amber-300">Set ADO_ORG, ADO_PROJECT, ADO_PAT env vars.</div>}
-        {linkSuccess && <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 rounded-lg p-2 mb-3 text-sm flex items-center gap-2"><CheckCircle2 size={14} /> {linkSuccess}</div>}
+        {linkSuccess && <div className="bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 rounded-lg p-2 mb-3 text-sm flex items-center gap-2"><CheckCircle2 size={14} /> {linkSuccess}</div>}
 
         {items.length === 0 && !error && <div className="text-center text-gray-400 dark:text-gray-500 py-16">No ADO items synced yet. Click "Sync" to pull your work items.</div>}
 
@@ -261,7 +261,7 @@ function KanbanCard({ item, typeIcon, draggable, onStateChange, stateChanging }:
               item.state === 'Active' || item.state === 'In Progress' || item.state === 'Committed'
                 ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
                 : item.state === 'Done' || item.state === 'Closed'
-                ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-300'
+                ? 'bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-300'
                 : item.state === 'Resolved'
                 ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-300'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
@@ -311,7 +311,7 @@ function ProjectDropTarget({ project, isExpanded, onToggle, onDrop }: { project:
 
 function TodoDropTarget({ todo, onDrop }: { todo: Todo; onDrop: (todoId: number, adoItemId: number) => void }) {
   const [dragOver, setDragOver] = useState(false);
-  const icon = todo.status === 'done' ? <CheckCircle2 size={12} className="text-green-500 shrink-0" /> : todo.status === 'in_progress' ? <div className="w-3 h-3 rounded-full border-2 border-blue-500 shrink-0" /> : <div className="w-3 h-3 rounded-full border-2 border-gray-300 dark:border-gray-600 shrink-0" />;
+  const icon = todo.status === 'done' ? <CheckCircle2 size={12} className="text-teal-500 shrink-0" /> : todo.status === 'in_progress' ? <div className="w-3 h-3 rounded-full border-2 border-blue-500 shrink-0" /> : <div className="w-3 h-3 rounded-full border-2 border-gray-300 dark:border-gray-600 shrink-0" />;
   return (
     <div onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'link'; setDragOver(true); }} onDragLeave={() => setDragOver(false)}
       onDrop={(e) => { e.preventDefault(); setDragOver(false); const d = e.dataTransfer.getData('application/x-ado-item'); if (d) { const { id, type } = JSON.parse(d); if (type === 'Product Backlog Item') onDrop(todo.id, id); } }}
@@ -340,7 +340,7 @@ function CreateAdoItemModal({ onClose, onCreate }: {
     'Feature': <Layers size={14} className="text-purple-500" />,
     'Bug': <Bug size={14} className="text-red-500" />,
     'Epic': <Layers size={14} className="text-orange-500" />,
-    'Test Case': <CheckCircle2 size={14} className="text-green-500" />,
+    'Test Case': <CheckCircle2 size={14} className="text-teal-500" />,
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -420,7 +420,7 @@ function CreateAdoItemModal({ onClose, onCreate }: {
             <button
               type="submit"
               disabled={!title.trim() || submitting}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
             >
               <Send size={14} /> {submitting ? 'Creating...' : 'Create in ADO'}
             </button>

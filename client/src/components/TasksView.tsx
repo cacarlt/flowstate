@@ -279,10 +279,10 @@ export default function TasksView() {
   };
 
   const statusIcon = (s: string) =>
-    s === 'done' ? <CircleCheck size={18} className="text-green-500" /> : s === 'in_progress' ? <CircleDot size={18} className="text-blue-500" /> : <Circle size={18} className="text-gray-300 dark:text-gray-600" />;
+    s === 'done' ? <CircleCheck size={18} className="text-teal-500" /> : s === 'in_progress' ? <CircleDot size={18} className="text-blue-500" /> : <Circle size={18} className="text-gray-300 dark:text-gray-600" />;
 
   const statusColor = (s: string) =>
-    s === 'done' ? 'text-green-600 dark:text-green-400' : s === 'in_progress' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500';
+    s === 'done' ? 'text-teal-600 dark:text-teal-400' : s === 'in_progress' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500';
 
   const isProjectDone = (p: Project) => p.todo_count > 0 && p.done_count === p.todo_count;
 
@@ -435,7 +435,7 @@ export default function TasksView() {
                   {project.todo_count > 0 && (
                     <div className="w-full max-w-[200px] h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full mt-1.5">
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${done ? 'bg-green-500' : 'bg-blue-500'}`}
+                        className={`h-full rounded-full transition-all duration-300 ${done ? 'bg-teal-500' : 'bg-blue-500'}`}
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -564,7 +564,7 @@ export default function TasksView() {
                               <button
                                 onClick={() => pushToAdo(todo)}
                                 disabled={pushingToAdo === todo.id}
-                                className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-green-500 hover:text-green-600 transition-all"
+                                className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-teal-500 hover:text-teal-600 transition-all"
                                 title="Push to ADO as PBI"
                               >
                                 <Layers size={12} /> {pushingToAdo === todo.id ? '...' : '→ ADO'}
@@ -606,7 +606,7 @@ export default function TasksView() {
                               <span className="text-gray-700 dark:text-gray-300 flex-1 truncate">{s.notes}</span>
                               {s.repo && <span className="text-gray-400 dark:text-gray-500 flex items-center gap-1"><Terminal size={10} /> {s.repo}</span>}
                               <span className={`px-1.5 py-0.5 rounded ${
-                                s.status === 'completed' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' :
+                                s.status === 'completed' ? 'bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300' :
                                 s.status === 'launched' || s.status === 'in_progress' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' :
                                 'bg-gray-100 dark:bg-gray-800 text-gray-500'
                               }`}>{s.status}</span>
@@ -615,7 +615,7 @@ export default function TasksView() {
                               </button>
                             </div>
                             {openTaskLogs.has(s.id) && (
-                              <div className="ml-4 mt-1 mb-1 bg-gray-950 text-green-400 font-mono text-xs p-2 rounded max-h-48 overflow-y-auto">
+                              <div className="ml-4 mt-1 mb-1 bg-gray-950 text-teal-400 font-mono text-xs p-2 rounded max-h-48 overflow-y-auto">
                                 {(taskLogLines[s.id] || []).length === 0 && <span className="text-gray-500">Waiting for logs...</span>}
                                 {(taskLogLines[s.id] || []).map((line, i) => (
                                   <div key={i} className="whitespace-pre-wrap leading-relaxed">{line}</div>

@@ -116,7 +116,7 @@ export default function SessionsView() {
     switch (s) {
       case 'launched': return <Play size={14} className="text-blue-500" />;
       case 'in_progress': return <CircleDot size={14} className="text-amber-500" />;
-      case 'completed': return <CheckCircle size={14} className="text-green-500" />;
+      case 'completed': return <CheckCircle size={14} className="text-teal-500" />;
       case 'abandoned': return <Ban size={14} className="text-gray-400" />;
       default: return <Circle size={14} className="text-gray-400" />;
     }
@@ -255,7 +255,7 @@ export default function SessionsView() {
                       {session.session_id && <span className="flex items-center gap-1"><Key size={12} /> {session.session_id}</span>}
                       <span className="flex items-center gap-1"><Clock size={12} /> {new Date(session.created_at).toLocaleDateString()}</span>
                       <span className={`px-1.5 py-0.5 rounded text-xs ${
-                        session.status === 'completed' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' :
+                        session.status === 'completed' ? 'bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300' :
                         session.status === 'launched' || session.status === 'in_progress' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' :
                         session.status === 'abandoned' ? 'bg-gray-100 dark:bg-gray-800 text-gray-500' :
                         'bg-gray-100 dark:bg-gray-800 text-gray-500'
@@ -294,8 +294,8 @@ export default function SessionsView() {
                       </button>
                     )}
                     {(session.status === 'launched' || session.status === 'in_progress') && (
-                      <button onClick={() => updateStatus(session.id, 'completed')} title="Mark completed" className="p-1 hover:bg-green-50 dark:hover:bg-green-950 rounded transition-colors">
-                        <CheckCircle size={14} className="text-green-500" />
+                      <button onClick={() => updateStatus(session.id, 'completed')} title="Mark completed" className="p-1 hover:bg-teal-50 dark:hover:bg-teal-950 rounded transition-colors">
+                        <CheckCircle size={14} className="text-teal-500" />
                       </button>
                     )}
                     <button
@@ -325,7 +325,7 @@ export default function SessionsView() {
               {/* Live log panel */}
               {openLogs.has(session.id) && (
                 <div className="border-t border-gray-100 dark:border-gray-800">
-                  <div className="bg-gray-950 text-green-400 font-mono text-xs p-3 max-h-64 overflow-y-auto">
+                  <div className="bg-gray-950 text-teal-400 font-mono text-xs p-3 max-h-64 overflow-y-auto">
                     {(logLinesMap[session.id] || []).length === 0 && (
                       <span className="text-gray-500">Waiting for logs...</span>
                     )}
