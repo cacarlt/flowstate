@@ -14,6 +14,7 @@ services:
       - ADO_ORG=${ADO_ORG:-IdentityDivision}
       - ADO_PROJECT=${ADO_PROJECT:-Engineering}
       - ADO_PAT=${ADO_PAT:-}
+      - ADO_AREA_PATH=${ADO_AREA_PATH:-}
       - ADO_PAT_AUTH_ID=${ADO_PAT_AUTH_ID:-}
       - ADO_PAT_NAME=${ADO_PAT_NAME:-}
       - ADO_PAT_ORG=${ADO_PAT_ORG:-IdentityDivision}

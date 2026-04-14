@@ -22,6 +22,7 @@ const ADO_PAT = process.env.ADO_PAT || '';
 const ADO_PAT_AUTH_ID = process.env.ADO_PAT_AUTH_ID || '';
 const ADO_PAT_NAME = process.env.ADO_PAT_NAME || '';
 const ADO_PAT_ORG = process.env.ADO_PAT_ORG || ADO_ORG;
+const ADO_AREA_PATH = process.env.ADO_AREA_PATH || '';
 
 function adoHeaders() {
   const token = Buffer.from(`:${ADO_PAT}`).toString('base64');
@@ -169,14 +170,16 @@ adoRouter.post('/sync', async (_req, res) => {
   }
 
   try {
+    const areaFilter = ADO_AREA_PATH ? ` AND [System.AreaPath] UNDER '${ADO_AREA_PATH}'` : '';
+
     // Query 1: Items assigned to me
     const myWiql = {
-      query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = @Me AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed' ORDER BY [System.ChangedDate] DESC`
+      query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = @Me AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed'${areaFilter} ORDER BY [System.ChangedDate] DESC`
     };
 
-    // Query 2: Unassigned items in the same project
+    // Query 2: Unassigned items in the same area path
     const unassignedWiql = {
-      query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = '' AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed' ORDER BY [System.ChangedDate] DESC`
+      query: `SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = '' AND [System.WorkItemType] IN ('Product Backlog Item', 'Feature') AND [System.State] <> 'Closed' AND [System.State] <> 'Removed'${areaFilter} ORDER BY [System.ChangedDate] DESC`
     };
 
     const [myRes, unRes] = await Promise.all([
@@ -324,6 +327,7 @@ adoRouter.post('/items', async (req, res) => {
     if (description) fields.description = description;
     if (assignedTo) fields.assignedTo = assignedTo;
     if (areaPath) fields.areaPath = areaPath;
+    else if (ADO_AREA_PATH) fields.areaPath = ADO_AREA_PATH;
     if (iterationPath) fields.iterationPath = iterationPath;
 
     const wi = await createWorkItem(type, fields, parentId);
