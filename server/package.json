@@ -11,18 +11,18 @@
     "test:integration": "vitest run --dir src/__tests__/integration"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.21.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "prom-client": "^15.1.3",
-    "sql.js": "^1.11.0"
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
-    "@types/supertest": "^6.0.2",
-    "supertest": "^7.0.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "vitest": "^4.1.4"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/supertest": "^7.2.0",
+    "supertest": "^7.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
   }
 }

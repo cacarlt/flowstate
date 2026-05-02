@@ -17,7 +17,7 @@ async function start() {
       : path.join(__dirname, '..', '..', 'client', 'dist'));
   const express = require('express');
   app.use(express.static(clientDist));
-  app.get('*', (_req: any, res: any) => {
+  app.get('/{*splat}', (_req: any, res: any) => {
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 

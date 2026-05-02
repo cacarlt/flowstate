@@ -8,8 +8,8 @@ Personal task management web app with integrations for Azure DevOps (work) and G
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18 + TypeScript + Tailwind CSS (Vite) |
-| Backend | Express + TypeScript |
+| Frontend | React 19 + TypeScript + Tailwind CSS v4 (Vite) |
+| Backend | Express 5 + TypeScript |
 | Database | SQLite via sql.js (pure JS, no native deps) |
 | Icons | Lucide React |
 | Containerization | Docker + Docker Compose |

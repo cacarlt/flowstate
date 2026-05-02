@@ -11,3 +11,6 @@ data/
 # Test artifacts
 test-results/
 playwright-report/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
