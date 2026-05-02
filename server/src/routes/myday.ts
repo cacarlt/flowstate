@@ -49,11 +49,11 @@ mydayRouter.get('/', (req, res) => {
     ORDER BY t.sort_order
   `);
 
-  // Tasks completed on this date
+  // Tasks completed on this date (matches by the date portion of updated_at)
   const completedToday = all(`
     SELECT t.*, p.name as project_name, p.due_date as project_due_date FROM todos t
     LEFT JOIN projects p ON p.id = t.project_id
-    WHERE t.status = 'done' AND t.updated_at >= ?
+    WHERE t.status = 'done' AND DATE(t.updated_at) = ?
     ORDER BY t.updated_at DESC
   `, [today]);
 

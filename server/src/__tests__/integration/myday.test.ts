@@ -57,6 +57,24 @@ describe('MyDay API', () => {
     const found = res.body.scheduledToday.find((t: any) => t.title === 'Other Day Task');
     expect(found).toBeUndefined();
   });
+
+  it('completedToday only includes tasks completed on the requested date, not later days', async () => {
+    // A task marked done "now" gets updated_at = current datetime.
+    // It should NOT appear in completedToday for an earlier date.
+    const proj = await request(app).post('/api/projects').send({ name: 'Completed Filter' });
+    const todo = await request(app).post('/api/todos').send({
+      project_id: proj.body.id,
+      title: 'Just Completed',
+    });
+    await request(app).put(`/api/todos/${todo.body.id}`).send({ status: 'done' });
+
+    // Querying a clearly past date must not surface tasks completed today.
+    const res = await request(app).get('/api/myday?date=2020-01-01');
+    expect(res.status).toBe(200);
+    const found = res.body.completedToday.find((t: any) => t.title === 'Just Completed');
+    expect(found).toBeUndefined();
+    expect(res.body.stats.totalCompletedToday).toBe(0);
+  });
 });
 
 describe('MyDay Bulk Schedule', () => {
