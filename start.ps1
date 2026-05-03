@@ -65,6 +65,14 @@ if (Test-Path "$traefikDir\docker-compose.yml") {
 # 3. Build and start the app container
 Write-Host "[3/5] Starting FlowState container (port 31060)..." -ForegroundColor Yellow
 Push-Location $root
+$sha = (& git rev-parse --short HEAD 2>$null)
+if ($LASTEXITCODE -eq 0 -and $sha) {
+    $dirty = if (& git status --porcelain 2>$null) { '-dirty' } else { '' }
+    $env:FLOWSTATE_VERSION = "$($sha.Trim())$dirty"
+} else {
+    $env:FLOWSTATE_VERSION = 'dev'
+}
+Write-Host "  Building version: $env:FLOWSTATE_VERSION" -ForegroundColor Cyan
 docker-compose up -d --build 2>&1 | Out-Null
 Pop-Location
 Start-Sleep 5

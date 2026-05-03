@@ -103,6 +103,19 @@ docker compose up -d --build   # Start app on :3001
 
 Access from phone via VPN. Same image, same port, different `.env`.
 
+### Versioned builds
+
+Each build is tagged with the short git SHA (plus `-dirty` if the working tree has uncommitted changes), so you can verify exactly what's running:
+
+```bash
+export FLOWSTATE_VERSION=$(git rev-parse --short HEAD)
+docker compose up -d --build
+docker images flowstate-app                # see all tagged versions
+curl http://flowstate.localhost/api/config # shows the running version
+```
+
+`scripts/start.ps1` does this automatically. If `FLOWSTATE_VERSION` isn't set, the image is tagged `flowstate-app:dev`. The version is also visible in the UI header next to the profile badge.
+
 ### With Monitoring
 
 Point your existing Prometheus at `<host>:3001/metrics` and import `grafana/dashboard.json`.

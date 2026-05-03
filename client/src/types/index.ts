@@ -81,6 +81,7 @@ export interface AppConfig {
   profileName: string;
   profileColor: string;
   integrations: string[];
+  version: string;
 }
 
 export interface PatStatus {

@@ -11,7 +11,7 @@ beforeEach(() => {
   mockFetch.mockReset();
   mockFetch.mockImplementation(async (url: string) => {
     if (url.includes('/api/config')) {
-      return { ok: true, status: 200, json: async () => ({ profileName: 'Work', profileColor: '#3b82f6', integrations: ['ado'] }) };
+      return { ok: true, status: 200, json: async () => ({ profileName: 'Work', profileColor: '#3b82f6', integrations: ['ado'], version: 'test-1.0' }) };
     }
     if (url.includes('/api/myday')) {
       return { ok: true, status: 200, json: async () => ({ dueTasks: [], scheduledToday: [], inProgress: [], unscheduled: [], completedToday: [], activeSessions: [], stats: { totalDue: 0, totalInProgress: 0, totalCompletedToday: 0, totalActiveSessions: 0 } }) };
@@ -53,5 +53,10 @@ describe('App', () => {
     const sessionsTab = await screen.findByText('Copilot Sessions');
     await user.click(sessionsTab);
     expect(screen.getByRole('button', { name: /Log Session/ })).toBeInTheDocument();
+  });
+
+  it('displays the build version in the header', async () => {
+    render(<App />);
+    expect(await screen.findByText('test-1.0')).toBeInTheDocument();
   });
 });

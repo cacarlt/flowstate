@@ -1,17 +1,30 @@
 FROM node:20-alpine AS client-build
 WORKDIR /app/client
 COPY client/package*.json ./
-RUN npm ci
+RUN npm ci --include=optional
 COPY client/ ./
 RUN npm run build
 
+FROM node:20-alpine AS server-build
+WORKDIR /app
+COPY server/package*.json ./
+RUN npm ci
+COPY server/ ./
+RUN npx tsc
+
 FROM node:20-alpine
+ARG VERSION=dev
+ENV FLOWSTATE_VERSION=$VERSION
+LABEL org.opencontainers.image.revision=$VERSION
+LABEL org.opencontainers.image.version=$VERSION
+LABEL org.opencontainers.image.title="FlowState"
+LABEL org.opencontainers.image.source="https://github.com/cacarlt/flowstate"
+
 RUN apk add --no-cache tzdata
 WORKDIR /app
 COPY server/package*.json ./
 RUN npm ci --omit=dev
-COPY server/ ./
-RUN npx tsc
+COPY --from=server-build /app/dist ./dist
 
 COPY --from=client-build /app/client/dist ./client-dist
 

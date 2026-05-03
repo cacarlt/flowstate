@@ -68,6 +68,14 @@ export default function App() {
                 {config.profileName}
               </span>
             )}
+            {config?.version && (
+              <span
+                className="text-[10px] font-mono text-gray-400 dark:text-gray-500"
+                title={`Build version: ${config.version}`}
+              >
+                {config.version}
+              </span>
+            )}
           </div>
           <button
             onClick={toggleDark}

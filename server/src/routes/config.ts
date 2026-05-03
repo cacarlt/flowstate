@@ -8,5 +8,6 @@ configRouter.get('/', (_req, res) => {
     profileName: process.env.PROFILE_NAME || 'Work',
     profileColor: process.env.PROFILE_COLOR || '#6366f1',
     integrations,
+    version: process.env.FLOWSTATE_VERSION || 'dev',
   });
 });

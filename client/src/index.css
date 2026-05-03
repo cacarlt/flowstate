@@ -18,3 +18,23 @@ body {
 .dark {
   color-scheme: dark;
 }
+
+/*
+ * Hide the native calendar picker indicator on <input type="date">.
+ * Microsoft Edge renders a calendar icon (with a day-of-month "today" badge
+ * in some versions) on this pseudo-element. Visually it looks like a
+ * "this is today" marker on whatever date is selected, which contradicts
+ * our explicit Today button. Modern Chromium/Edge open the picker when
+ * the input field itself is clicked, so the indicator is redundant.
+ */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}

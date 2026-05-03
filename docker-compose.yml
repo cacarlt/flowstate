@@ -1,6 +1,10 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        VERSION: ${FLOWSTATE_VERSION:-dev}
+    image: flowstate-app:${FLOWSTATE_VERSION:-dev}
     container_name: flowstate
     ports:
       - "31060:3001"
@@ -8,6 +12,7 @@ services:
       - ${APP_DATA_PATH:-./data}:/app/data
     environment:
       - TZ=America/Los_Angeles
+      - FLOWSTATE_VERSION=${FLOWSTATE_VERSION:-dev}
       - PROFILE_NAME=${PROFILE_NAME:-Work}
       - PROFILE_COLOR=${PROFILE_COLOR:-#6366f1}
       - INTEGRATIONS=${INTEGRATIONS:-ado}
