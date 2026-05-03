@@ -13,6 +13,13 @@ COPY server/ ./
 RUN npx tsc
 
 FROM node:20-alpine
+ARG VERSION=dev
+ENV FLOWSTATE_VERSION=$VERSION
+LABEL org.opencontainers.image.revision=$VERSION
+LABEL org.opencontainers.image.version=$VERSION
+LABEL org.opencontainers.image.title="FlowState"
+LABEL org.opencontainers.image.source="https://github.com/cacarlt/flowstate"
+
 RUN apk add --no-cache tzdata
 WORKDIR /app
 COPY server/package*.json ./

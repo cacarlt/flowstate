@@ -81,7 +81,7 @@ export const api = {
   syncGithub: () => request<any>('/github/sync', { method: 'POST' }),
 
   // Config
-  getConfig: () => request<{ profileName: string; profileColor: string; integrations: string[] }>('/config'),
+  getConfig: () => request<{ profileName: string; profileColor: string; integrations: string[]; version: string }>('/config'),
 
   // My Day
   getMyDay: (date?: string) => request<any>(`/myday${date ? `?date=${date}` : ''}`),

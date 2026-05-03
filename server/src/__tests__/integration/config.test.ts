@@ -12,5 +12,7 @@ describe('Config API', () => {
     expect(res.body).toHaveProperty('profileColor');
     expect(res.body).toHaveProperty('integrations');
     expect(Array.isArray(res.body.integrations)).toBe(true);
+    expect(res.body).toHaveProperty('version');
+    expect(typeof res.body.version).toBe('string');
   });
 });
