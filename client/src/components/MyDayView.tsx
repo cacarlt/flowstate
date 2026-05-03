@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 import { Todo, CopilotSession } from '../types';
-import { Calendar, Clock, Circle, CircleDot, CircleCheck, AlertTriangle, Bot, CheckCircle, Zap, StickyNote, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import { Calendar, Clock, Circle, CircleDot, CircleCheck, AlertTriangle, Bot, CheckCircle, Zap, StickyNote, ChevronLeft, ChevronRight, CalendarPlus, RotateCcw } from 'lucide-react';
 import TaskDetailModal from './TaskDetailModal';
 
 type MyDayTask = Todo & { project_name: string; project_due_date: string | null };
@@ -174,9 +174,11 @@ export default function MyDayView() {
             {!isToday && (
               <button
                 onClick={() => setSelectedDate(todayStr)}
-                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1"
+                title={`Jump back to today (${todayStr})`}
               >
-                Today
+                <RotateCcw size={11} />
+                Go to today
               </button>
             )}
             <button
